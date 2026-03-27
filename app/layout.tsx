@@ -101,7 +101,6 @@ export default function RootLayout({
                 <a href="https://vocabwize.com" className="hover:text-green-700">Vocabulary</a>
                 <a href="https://calcpeek.com" className="hover:text-green-700">Calculators</a>
                 <a href="https://tariffpeek.com" className="hover:text-green-700">HS Codes &amp; Tariffs</a>
-                <a href="https://ingredipeek.com" className="hover:text-green-700 font-medium text-green-700">IngrediPeek</a>
               </div>
             </div>
             <p className="mt-2 text-xs">
