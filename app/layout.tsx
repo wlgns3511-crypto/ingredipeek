@@ -62,6 +62,9 @@ export default function RootLayout({
               <a href="/allergen/halal" className="text-slate-600 hover:text-green-700 transition-colors">
                 Halal
               </a>
+              <a href="/checker" className="text-slate-600 hover:text-green-700 transition-colors">
+                Checker
+              </a>
               <a href="/about" className="text-slate-600 hover:text-green-700 transition-colors">
                 About
               </a>

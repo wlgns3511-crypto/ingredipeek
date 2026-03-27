@@ -1,5 +1,6 @@
 import { getRecentProducts, getAllBrands } from "@/lib/db";
 import { AdSlot } from "@/components/AdSlot";
+import { AllergenChecker } from "@/components/AllergenChecker";
 
 const CATEGORIES = [
   {
@@ -106,6 +107,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <AllergenChecker />
 
       <AdSlot id="3741591457" />
 
