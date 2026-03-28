@@ -298,6 +298,15 @@ export default async function ProductPage({ params }: Props) {
             </a>
           </section>
 
+          {/* Related Data Resources */}
+          <section className="mt-8 p-4 bg-slate-50 rounded-lg">
+            <h3 className="text-sm font-semibold text-slate-500 mb-2">Related Data Resources</h3>
+            <div className="flex flex-wrap gap-3 text-sm">
+              <a href="https://caloriewize.com" className="text-green-600 hover:underline">CalorieWize - Nutrition facts &rarr;</a>
+              <a href="https://calcpeek.com" className="text-green-600 hover:underline">CalcPeek - Health calculators &rarr;</a>
+            </div>
+          </section>
+
           <DataFeedback />
 
           <div className="flex gap-4 items-center flex-wrap">
