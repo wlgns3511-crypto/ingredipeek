@@ -31,10 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-SEE7EBSJ3C" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXX');`,
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-SEE7EBSJ3C');`,
           }}
         />
         <script
@@ -91,21 +91,12 @@ export default function RootLayout({
             </p>
             <div className="mt-4 pt-4 border-t border-slate-100">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-                DataPeek Insights Network
+                Related Resources
               </p>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                <a href="https://salarybycity.com" className="hover:text-green-700">Salaries</a>
-                <a href="https://costbycity.com" className="hover:text-green-700">Cost of Living</a>
-                <a href="https://zippeek.com" className="hover:text-green-700">ZIP Codes</a>
-                <a href="https://guidebycity.com" className="hover:text-green-700">City Guides</a>
-                <a href="https://degreewize.com" className="hover:text-green-700">Colleges</a>
                 <a href="https://caloriewize.com" className="hover:text-green-700">Nutrition</a>
-                <a href="https://nameblooms.com" className="hover:text-green-700">Baby Names</a>
-                <a href="https://vocabwize.com" className="hover:text-green-700">Vocabulary</a>
                 <a href="https://calcpeek.com" className="hover:text-green-700">Calculators</a>
-                <a href="https://tariffpeek.com" className="hover:text-green-700">HS Codes &amp; Tariffs</a>
-              
-                <a href="https://sunpowerpeek.com" className="hover:text-green-600">Solar Power</a>
+                <a href="https://nameblooms.com" className="hover:text-green-700">Baby Names</a>
               </div>
             </div>
             <p className="mt-2 text-xs">
