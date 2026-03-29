@@ -235,7 +235,17 @@ export interface ProductComparison {
 }
 
 export function getComparisonBySlug(slug: string): ProductComparison | undefined {
-  return getDb().prepare("SELECT * FROM comparisons WHERE slug = ?").get(slug) as ProductComparison | undefined;
+  // First try DB lookup
+  const row = getDb().prepare("SELECT * FROM comparisons WHERE slug = ?").get(slug) as ProductComparison | undefined;
+  if (row) return row;
+
+  // Fallback: parse slug (format: product-name-NNNNNN-vs-product-name-NNNNNN)
+  const match = slug.match(/^(.+-\d{6})-vs-(.+-\d{6})$/);
+  if (!match) return undefined;
+  const a = getProductBySlug(match[1]);
+  const b = getProductBySlug(match[2]);
+  if (!a || !b) return undefined;
+  return { slug, product_a: match[1], product_b: match[2] };
 }
 
 export function getAllComparisonSlugs(limit = 50000): { slug: string }[] {

@@ -18,8 +18,11 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamicParams = true;
+export const revalidate = 86400;
+
 export async function generateStaticParams() {
-  const slugs = getAllProductSlugs(5000);
+  const slugs = getAllProductSlugs(500);
   return slugs.map((s) => ({ slug: s.slug }));
 }
 
@@ -387,32 +390,26 @@ export default async function ProductPage({ params }: Props) {
         </aside>
       </div>
 
-      {/* Related Products */}
+      {/* Related Products with compare links */}
       {related.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-xl font-bold mb-4">Related Products</h2>
+          <h2 className="text-xl font-bold mb-4">Compare with Similar Products</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {related.map((p) => (
-              <a
-                key={p.barcode}
-                href={`/product/${p.slug}/`}
-                className="border border-slate-200 rounded-xl p-3 hover:border-green-300 hover:shadow-sm transition-all group"
-              >
-                {p.image_url && (
-                  <div className="w-full h-20 mb-2 flex items-center justify-center overflow-hidden rounded-lg bg-slate-50">
-                    <img
-                      src={p.image_url}
-                      alt={p.name}
-                      className="h-full w-full object-contain"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-                <p className="text-sm font-medium text-slate-800 line-clamp-2 group-hover:text-green-700">
-                  {p.name}
-                </p>
+              <div key={p.barcode} className="border border-slate-200 rounded-xl p-3 hover:border-green-300 hover:shadow-sm transition-all">
+                <a href={`/product/${p.slug}/`} className="group">
+                  {p.image_url && (
+                    <div className="w-full h-20 mb-2 flex items-center justify-center overflow-hidden rounded-lg bg-slate-50">
+                      <img src={p.image_url} alt={p.name} className="h-full w-full object-contain" loading="lazy" />
+                    </div>
+                  )}
+                  <p className="text-sm font-medium text-slate-800 line-clamp-2 group-hover:text-green-700">{p.name}</p>
+                </a>
                 {p.brand && <p className="text-xs text-slate-500">{p.brand}</p>}
-              </a>
+                <a href={`/compare/${slug}-vs-${p.slug}/`} className="text-xs text-green-600 hover:underline mt-1 block">
+                  Compare →
+                </a>
+              </div>
             ))}
           </div>
         </section>
