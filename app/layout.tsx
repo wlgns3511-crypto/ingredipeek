@@ -87,6 +87,9 @@ export default function RootLayout({
               <a href="/about" className="text-slate-600 hover:text-green-700 transition-colors">
                 About
               </a>
+              <a href="/es/" className="text-slate-600 hover:text-green-700 transition-colors font-semibold">
+                ES
+              </a>
             </nav>
           </div>
         </header>

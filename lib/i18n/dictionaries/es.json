@@ -1,0 +1,21 @@
+{
+  "siteName": "IngrediPeek",
+  "title": "Verificador de Al\u00e9rgenos e Ingredientes",
+  "description": "Consulta al\u00e9rgenos, ingredientes y compatibilidad diet\u00e9tica de miles de productos alimenticios.",
+  "allergenInfo": "Informaci\u00f3n de Al\u00e9rgenos",
+  "ingredients": "Ingredientes",
+  "calories": "Calor\u00edas",
+  "totalFat": "Grasas Totales",
+  "protein": "Prote\u00ednas",
+  "sugars": "Az\u00facares",
+  "salt": "Sal / Sodio",
+  "fiber": "Fibra Diet\u00e9tica",
+  "nutritionFacts": "Informaci\u00f3n Nutricional",
+  "dietCompatibility": "Compatibilidad Diet\u00e9tica",
+  "allergenSummary": "Resumen de Al\u00e9rgenos",
+  "quickSummary": "Resumen R\u00e1pido",
+  "noAllergens": "No se detectaron al\u00e9rgenos principales",
+  "containsAllergens": "Contiene al\u00e9rgeno(s)",
+  "viewInSpanish": "Espa\u00f1ol",
+  "viewInEnglish": "English version"
+}

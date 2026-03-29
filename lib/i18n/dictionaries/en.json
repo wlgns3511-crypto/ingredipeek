@@ -1,0 +1,21 @@
+{
+  "siteName": "IngrediPeek",
+  "title": "Food Allergen & Ingredient Checker",
+  "description": "Check food allergens, ingredients, and dietary compatibility for thousands of products.",
+  "allergenInfo": "Allergen Information",
+  "ingredients": "Ingredients",
+  "calories": "Calories",
+  "totalFat": "Total Fat",
+  "protein": "Protein",
+  "sugars": "Sugars",
+  "salt": "Salt / Sodium",
+  "fiber": "Dietary Fiber",
+  "nutritionFacts": "Nutrition Facts",
+  "dietCompatibility": "Diet Compatibility",
+  "allergenSummary": "Allergen Summary",
+  "quickSummary": "Quick Summary",
+  "noAllergens": "No major allergens detected",
+  "containsAllergens": "Contains allergen(s)",
+  "viewInSpanish": "Espa\u00f1ol",
+  "viewInEnglish": "English version"
+}
