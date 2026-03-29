@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getAllProductSlugsForSitemap, getAllBrands, getBrandSlug } from "@/lib/db";
+import { getAllProductSlugsForSitemap, getAllBrands, getBrandSlug, getAllComparisonSlugs } from "@/lib/db";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -43,5 +43,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...allergenPages, ...brandPages, ...productPages];
+  const comparisonPages: MetadataRoute.Sitemap = getAllComparisonSlugs(1500).map((c) => ({
+    url: `${SITE_URL}/compare/${c.slug}/`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticPages, ...allergenPages, ...brandPages, ...productPages, ...comparisonPages];
 }

@@ -226,6 +226,22 @@ export function countAllProducts(): number {
   return row.c;
 }
 
+// --- Comparison queries ---
+
+export interface ProductComparison {
+  slug: string;
+  product_a: string;
+  product_b: string;
+}
+
+export function getComparisonBySlug(slug: string): ProductComparison | undefined {
+  return getDb().prepare("SELECT * FROM comparisons WHERE slug = ?").get(slug) as ProductComparison | undefined;
+}
+
+export function getAllComparisonSlugs(limit = 50000): { slug: string }[] {
+  return getDb().prepare("SELECT slug FROM comparisons LIMIT ?").all(limit) as { slug: string }[];
+}
+
 export function getRelatedProducts(categories: string | null, excludeSlug: string, limit = 6): Product[] {
   if (!categories) {
     return getDb()
