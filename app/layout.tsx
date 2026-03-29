@@ -84,6 +84,7 @@ export default function RootLayout({
               <a href="/checker" className="text-slate-600 hover:text-green-700 transition-colors">
                 Checker
               </a>
+              <a href="/blog/" className="text-slate-600 hover:text-green-700 transition-colors">Guides</a>
               <a href="/about" className="text-slate-600 hover:text-green-700 transition-colors">
                 About
               </a>

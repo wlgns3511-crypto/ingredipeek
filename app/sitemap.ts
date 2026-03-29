@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllProductSlugsForSitemap, getAllBrands, getBrandSlug, getAllComparisonSlugs } from "@/lib/db";
+import { getAllPosts } from "@/lib/blog";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -14,6 +15,7 @@ const ALLERGEN_TYPES = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const posts = getAllPosts();
   const productSlugs = getAllProductSlugsForSitemap(50000);
   const brands = getAllBrands(500);
 
@@ -49,5 +51,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...allergenPages, ...brandPages, ...productPages, ...comparisonPages];
+  const blogPages: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}/blog/`, changeFrequency: "weekly" as const, priority: 0.8 },
+    ...posts.map((p) => ({
+      url: `${SITE_URL}/blog/${p.slug}/`,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+      lastModified: p.updatedAt ?? p.publishedAt,
+    })),
+  ];
+
+  return [...staticPages, ...allergenPages, ...brandPages, ...productPages, ...comparisonPages, ...blogPages];
 }
