@@ -252,6 +252,29 @@ export function getAllComparisonSlugs(limit = 50000): { slug: string }[] {
   return getDb().prepare("SELECT slug FROM comparisons LIMIT ?").all(limit) as { slug: string }[];
 }
 
+export function getRandomProducts(limit = 20): Product[] {
+  return getDb()
+    .prepare("SELECT * FROM products WHERE slug IS NOT NULL ORDER BY RANDOM() LIMIT ?")
+    .all(limit) as Product[];
+}
+
+/** Get current ISO week number (1-52) */
+export function getCurrentWeek(): number {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const diff = now.getTime() - start.getTime();
+  const oneWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.ceil((diff / oneWeek + start.getDay() + 1) / 7);
+}
+
+export function getRotatingComparisonSlugs(limit = 2000): { slug: string }[] {
+  const week = getCurrentWeek();
+  const offset = ((week - 1) % 50) * limit;
+  return getDb().prepare(
+    'SELECT slug FROM comparisons ORDER BY slug LIMIT ? OFFSET ?'
+  ).all(limit, offset) as { slug: string }[];
+}
+
 export function getRelatedProducts(categories: string | null, excludeSlug: string, limit = 6): Product[] {
   if (!categories) {
     return getDb()

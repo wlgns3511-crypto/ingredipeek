@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug, getAllProductSlugs, getRelatedProducts } from "@/lib/db";
+import { getProductBySlug, getAllProductSlugs, getRelatedProducts, getRandomProducts } from "@/lib/db";
 import { generateAnalysis, generateFAQ, ALLERGEN_LIST, DIET_LIST } from "@/lib/analysis";
 import { productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
 import { AllergenBadge } from "@/components/AllergenBadge";
@@ -11,6 +11,7 @@ import { DataFeedback } from "@/components/DataFeedback";
 import { FreshnessTag } from "@/components/FreshnessTag";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FAQ } from "@/components/FAQ";
+import { AuthorBox } from "@/components/AuthorBox";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -54,6 +55,7 @@ export default async function ProductPage({ params }: Props) {
   const analysis = generateAnalysis(product);
   const faqItems = generateFAQ(product);
   const related = getRelatedProducts(product.categories, slug, 6);
+  const randomProducts = getRandomProducts(20).filter((p) => p.slug && p.slug !== slug);
 
   const allergenData = ALLERGEN_LIST.map((a) => ({
     name: a.name,
@@ -318,6 +320,8 @@ export default async function ProductPage({ params }: Props) {
               title={`${product.name} allergen info`}
             />
           </div>
+
+          <AuthorBox />
         </div>
 
         {/* Sidebar */}
@@ -411,6 +415,29 @@ export default async function ProductPage({ params }: Props) {
                 </a>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+      {/* Discover More Comparisons */}
+      {randomProducts.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-xl font-bold mb-4">Discover More Comparisons</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {randomProducts.map((p) => {
+              const pair = [slug, p.slug!].sort();
+              const compareSlug = `${pair[0]}-vs-${pair[1]}`;
+              return (
+                <a
+                  key={p.barcode}
+                  href={`/compare/${compareSlug}/`}
+                  className="block border border-slate-200 rounded-lg p-3 hover:border-green-300 hover:shadow-sm transition-all text-sm"
+                >
+                  <span className="font-medium text-green-700">{product.name}</span>
+                  <span className="text-slate-400 mx-1">vs</span>
+                  <span className="font-medium text-slate-700">{p.name}</span>
+                </a>
+              );
+            })}
           </div>
         </section>
       )}

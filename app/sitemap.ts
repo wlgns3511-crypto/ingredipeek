@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getAllProductSlugsForSitemap, getAllBrands, getBrandSlug, getAllComparisonSlugs } from "@/lib/db";
+import { getAllProductSlugsForSitemap, getAllBrands, getBrandSlug, getAllComparisonSlugs, getRotatingComparisonSlugs } from "@/lib/db";
 import { getAllPosts } from "@/lib/blog";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
@@ -13,6 +13,8 @@ const ALLERGEN_TYPES = [
   "organic",
   "vegetarian",
 ];
+
+export const revalidate = 86400;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
@@ -45,11 +47,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const comparisonPages: MetadataRoute.Sitemap = getAllComparisonSlugs(1500).map((c) => ({
-    url: `${SITE_URL}/compare/${c.slug}/`,
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
+  // 80% stable core + 20% weekly rotation
+  const stableComps = getAllComparisonSlugs(1200);
+  const rotatingComps = getRotatingComparisonSlugs(300);
+  const allComps = [...stableComps, ...rotatingComps];
+  // Deduplicate by slug
+  const seen = new Set<string>();
+  const comparisonPages: MetadataRoute.Sitemap = allComps
+    .filter((c) => { if (seen.has(c.slug)) return false; seen.add(c.slug); return true; })
+    .map((c) => ({
+      url: `${SITE_URL}/compare/${c.slug}/`,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }));
 
   const blogPages: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/blog/`, changeFrequency: "weekly" as const, priority: 0.8 },

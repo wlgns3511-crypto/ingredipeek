@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getComparisonBySlug, getProductBySlug, getAllComparisonSlugs } from "@/lib/db";
+import { getComparisonBySlug, getProductBySlug, getAllComparisonSlugs, getRandomProducts } from "@/lib/db";
 import { faqJsonLd, breadcrumbJsonLd } from "@/lib/schema";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { AdSlot } from "@/components/AdSlot";
@@ -43,6 +43,27 @@ export default async function ComparePage({ params }: Props) {
   const a = getProductBySlug(comp.product_a);
   const b = getProductBySlug(comp.product_b);
   if (!a || !b) notFound();
+
+  // Get 30 random products and form 15 unique pairs
+  const randomPool = getRandomProducts(30).filter((p) => p.slug);
+  const randomPairs: { slugA: string; nameA: string; slugB: string; nameB: string; compareSlug: string }[] = [];
+  const seenPairs = new Set<string>();
+  for (let i = 0; i < randomPool.length - 1 && randomPairs.length < 15; i += 2) {
+    const pA = randomPool[i];
+    const pB = randomPool[i + 1];
+    if (!pA?.slug || !pB?.slug || pA.slug === pB.slug) continue;
+    const sorted = [pA.slug, pB.slug].sort();
+    const pairKey = `${sorted[0]}-vs-${sorted[1]}`;
+    if (seenPairs.has(pairKey)) continue;
+    seenPairs.add(pairKey);
+    randomPairs.push({
+      slugA: sorted[0],
+      nameA: sorted[0] === pA.slug ? pA.name : pB.name,
+      slugB: sorted[1],
+      nameB: sorted[1] === pB.slug ? pB.name : pA.name,
+      compareSlug: pairKey,
+    });
+  }
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -167,6 +188,25 @@ export default async function ComparePage({ params }: Props) {
           ))}
         </div>
       </section>
+      {/* Explore More Comparisons */}
+      {randomPairs.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-xl font-bold text-slate-900 mb-4">Explore More Comparisons</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {randomPairs.map((pair) => (
+              <a
+                key={pair.compareSlug}
+                href={`/compare/${pair.compareSlug}/`}
+                className="block border border-slate-200 rounded-lg p-3 hover:border-green-300 hover:shadow-sm transition-all text-sm"
+              >
+                <span className="font-medium text-green-700">{pair.nameA}</span>
+                <span className="text-slate-400 mx-1">vs</span>
+                <span className="font-medium text-blue-700">{pair.nameB}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
     </article>
   );
 }
