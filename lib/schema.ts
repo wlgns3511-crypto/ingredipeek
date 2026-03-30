@@ -26,6 +26,8 @@ export function productJsonLd(product: Product) {
     ...(product.barcode
       ? { gtin: product.barcode }
       : {}),
+    dateModified: "2026-03-31",
+    author: { "@type": "Organization", name: "DataPeek" },
   };
 
   // Nutrition

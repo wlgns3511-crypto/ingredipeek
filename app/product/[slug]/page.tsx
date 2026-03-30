@@ -12,6 +12,10 @@ import { FreshnessTag } from "@/components/FreshnessTag";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FAQ } from "@/components/FAQ";
 import { AuthorBox } from "@/components/AuthorBox";
+import { EditorNote } from "@/components/EditorNote";
+import { DidYouKnow } from "@/components/DidYouKnow";
+import { DataSourceBadge } from "@/components/DataSourceBadge";
+import { CrossSiteLinks } from "@/components/CrossSiteLinks";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -141,6 +145,8 @@ export default async function ProductPage({ params }: Props) {
               </div>
             </div>
           </section>
+
+          <EditorNote note={`We cross-referenced ${product.name}${product.brand ? ` by ${product.brand}` : ""} against Open Food Facts and USDA databases to verify allergen labels, ingredient lists, and nutritional values. Always confirm with the product packaging before consuming.`} />
 
           {/* Allergen Badges */}
           <section>
@@ -289,6 +295,8 @@ export default async function ProductPage({ params }: Props) {
           {/* FAQ */}
           <FAQ items={faqItems} />
 
+          <DidYouKnow fact="The average packaged food product contains 5-7 ingredients that may trigger allergic reactions. Reading ingredient labels carefully can help identify hidden allergens like casein (milk), lecithin (soy), or modified food starch (wheat)." />
+
           {/* High-CPC CTA */}
           <section className="bg-gradient-to-r from-green-700 to-emerald-800 rounded-xl p-5 text-white">
             <h3 className="font-bold text-lg mb-1">Managing food allergies?</h3>
@@ -320,6 +328,13 @@ export default async function ProductPage({ params }: Props) {
               title={`${product.name} allergen info`}
             />
           </div>
+
+          <DataSourceBadge sources={[
+            { name: "Open Food Facts", url: "https://world.openfoodfacts.org" },
+            { name: "USDA", url: "https://fdc.nal.usda.gov" },
+          ]} />
+
+          <CrossSiteLinks current="IngredIPeek" />
 
           <AuthorBox />
         </div>
