@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug, getAllProductSlugs, getRelatedProducts, getRandomProducts } from "@/lib/db";
+import { getProductBySlug, getAllProductSlugs, getRelatedProducts, getRandomProducts, getGlobalAvgCalories } from "@/lib/db";
 import { generateAnalysis, generateFAQ, ALLERGEN_LIST, DIET_LIST } from "@/lib/analysis";
 import { productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
 import { AllergenBadge } from "@/components/AllergenBadge";
@@ -212,6 +212,62 @@ export default async function ProductPage({ params }: Props) {
               })}
             </div>
           </section>
+
+          {/* Data Insights */}
+          {(() => {
+            const nutriscoreLabels: Record<string, string> = {
+              a: 'Excellent nutritional quality',
+              b: 'Good nutritional quality',
+              c: 'Average nutritional quality',
+              d: 'Poor nutritional quality',
+              e: 'Unhealthy nutritional quality',
+            };
+            const novaLabels: Record<number, string> = {
+              1: 'unprocessed/minimally processed',
+              2: 'processed culinary ingredients',
+              3: 'processed foods',
+              4: 'ultra-processed foods',
+            };
+            const globalAvgCal = getGlobalAvgCalories();
+            const calDiff = product.calories != null && globalAvgCal > 0 ? ((product.calories - globalAvgCal) / globalAvgCal * 100) : null;
+            return (
+              <section className="mb-6 bg-green-50 border border-green-200 rounded-xl p-5">
+                <h2 className="text-lg font-bold text-green-900 mb-3">Product Insights</h2>
+                <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">!</span>
+                    <p className="text-slate-700">
+                      This product contains <strong className={containsCount > 0 ? 'text-red-700' : 'text-green-700'}>{containsCount} of 8 major allergens</strong> tracked by food safety authorities (milk, gluten, nuts, soy, eggs, fish, shellfish, peanuts).
+                    </p>
+                  </div>
+                  {product.nutriscore && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5 font-bold uppercase">{product.nutriscore}</span>
+                      <p className="text-slate-700">
+                        Nutri-Score <strong className="uppercase">{product.nutriscore}</strong> means <strong>{nutriscoreLabels[product.nutriscore.toLowerCase()] || 'unrated'}</strong> based on the European nutritional grading system.
+                      </p>
+                    </div>
+                  )}
+                  {calDiff !== null && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5">{calDiff > 0 ? '▲' : '▼'}</span>
+                      <p className="text-slate-700">
+                        At <strong>{product.calories} kcal/100g</strong>, this is <strong className={calDiff > 0 ? 'text-red-700' : 'text-green-700'}>{Math.abs(calDiff).toFixed(0)}% {calDiff > 0 ? 'above' : 'below'}</strong> the database average of {globalAvgCal} kcal/100g.
+                      </p>
+                    </div>
+                  )}
+                  {product.nova_group && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5">{product.nova_group}</span>
+                      <p className="text-slate-700">
+                        NOVA Group {product.nova_group} classifies this as <strong>{novaLabels[product.nova_group] || 'unknown processing level'}</strong>.{product.nova_group === 4 ? ' Consider less processed alternatives.' : ''}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          })()}
 
           <AdSlot id="3741591457" />
 

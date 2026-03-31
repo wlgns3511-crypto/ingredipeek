@@ -275,6 +275,11 @@ export function getRotatingComparisonSlugs(limit = 2000): { slug: string }[] {
   ).all(limit, offset) as { slug: string }[];
 }
 
+export function getGlobalAvgCalories(): number {
+  const row = getDb().prepare('SELECT AVG(calories) as avg FROM products WHERE calories IS NOT NULL AND calories > 0').get() as { avg: number };
+  return Math.round(row.avg);
+}
+
 export function getRelatedProducts(categories: string | null, excludeSlug: string, limit = 6): Product[] {
   if (!categories) {
     return getDb()
