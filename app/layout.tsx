@@ -79,20 +79,20 @@ export default function RootLayout({
               {SITE_NAME}
             </a>
             <nav className="flex gap-5 text-sm font-medium">
-              <a href="/allergen/gluten-free" className="text-slate-600 hover:text-green-700 transition-colors">
+              <a href="/allergen/gluten-free/" className="text-slate-600 hover:text-green-700 transition-colors">
                 Gluten-Free
               </a>
-              <a href="/allergen/vegan" className="text-slate-600 hover:text-green-700 transition-colors">
+              <a href="/allergen/vegan/" className="text-slate-600 hover:text-green-700 transition-colors">
                 Vegan
               </a>
-              <a href="/allergen/halal" className="text-slate-600 hover:text-green-700 transition-colors">
+              <a href="/allergen/halal/" className="text-slate-600 hover:text-green-700 transition-colors">
                 Halal
               </a>
-              <a href="/checker" className="text-slate-600 hover:text-green-700 transition-colors">
+              <a href="/checker/" className="text-slate-600 hover:text-green-700 transition-colors">
                 Checker
               </a>
               <a href="/blog/" className="text-slate-600 hover:text-green-700 transition-colors">Guides</a>
-              <a href="/about" className="text-slate-600 hover:text-green-700 transition-colors">
+              <a href="/about/" className="text-slate-600 hover:text-green-700 transition-colors">
                 About
               </a>
               <a href="/es/" className="text-slate-600 hover:text-green-700 transition-colors font-semibold">
@@ -111,15 +111,15 @@ export default function RootLayout({
               Food allergen and ingredient data sourced from Open Food Facts, an open database of food products from around the world.
             </p>
             <p className="mt-3">
-              <a href="/about" className="hover:text-green-700">About</a>
+              <a href="/about/" className="hover:text-green-700">About</a>
               {" | "}
-              <a href="/privacy" className="hover:text-green-700">Privacy</a>
+              <a href="/privacy/" className="hover:text-green-700">Privacy</a>
               {" | "}
-              <a href="/terms" className="hover:text-green-700">Terms</a>
+              <a href="/terms/" className="hover:text-green-700">Terms</a>
               {" | "}
-              <a href="/disclaimer" className="hover:text-green-700">Disclaimer</a>
+              <a href="/disclaimer/" className="hover:text-green-700">Disclaimer</a>
               {" | "}
-              <a href="/contact" className="hover:text-green-700">Contact</a>
+              <a href="/contact/" className="hover:text-green-700">Contact</a>
             </p>
             <div className="mt-4 pt-4 border-t border-slate-100">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
