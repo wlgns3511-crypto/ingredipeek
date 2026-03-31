@@ -10,7 +10,7 @@ import { ComparisonBar } from "@/components/ComparisonBar";
 interface Props { params: Promise<{ slug: string }> }
 
 export const dynamicParams = true;
-export const revalidate = 86400;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   return getAllComparisonSlugs(500).map((c) => ({ slug: c.slug }));

@@ -11,7 +11,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 interface Props { params: Promise<{ slug: string }> }
 
 export const dynamicParams = true;
-export const revalidate = 86400;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   return getAllProductSlugs(300).map((s) => ({ slug: s.slug }));

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 const SITE_NAME = "IngrediPeek";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     "Check food allergens, ingredients, and dietary compatibility for thousands of products. Find gluten-free, vegan, halal, and nut-free foods instantly.",
   metadataBase: new URL(SITE_URL),
-  robots: { index: true, follow: true },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
@@ -31,6 +31,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-SEE7EBSJ3C" />
         <script
           dangerouslySetInnerHTML={{
@@ -109,6 +111,8 @@ export default function RootLayout({
               <a href="/privacy" className="hover:text-green-700">Privacy</a>
               {" | "}
               <a href="/terms" className="hover:text-green-700">Terms</a>
+              {" | "}
+              <a href="/disclaimer" className="hover:text-green-700">Disclaimer</a>
               {" | "}
               <a href="/contact" className="hover:text-green-700">Contact</a>
             </p>
