@@ -275,7 +275,7 @@ export default async function ProductPage({ params }: Props) {
           <section className="bg-green-50 border border-green-200 rounded-xl p-5">
             <h2 className="text-lg font-bold mb-2 text-green-900">Allergen Summary</h2>
             <p className="text-slate-700 text-sm leading-relaxed">{analysis}</p>
-            <FreshnessTag />
+            <FreshnessTag source="Open Food Facts" />
           </section>
 
           {/* Ingredients */}

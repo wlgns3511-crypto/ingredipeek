@@ -97,7 +97,7 @@ export default async function ComparePage({ params }: Props) {
           {a.name} vs {b.name}
         </h1>
         <p className="text-slate-600">Nutrition & Ingredient Comparison (per 100g)</p>
-        <FreshnessTag />
+        <FreshnessTag source="Open Food Facts" />
       </header>
 
       <AdSlot id="top" />
