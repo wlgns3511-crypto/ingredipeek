@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: { canonical: `${SITE_URL}/brand/${slug}/` },
     openGraph: {
       title: `${brand} Products | IngrediPeek`,
       description,

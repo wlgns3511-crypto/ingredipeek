@@ -16,10 +16,8 @@ export const metadata: Metadata = {
     "Check food allergens, ingredients, and dietary compatibility for thousands of products. Find gluten-free, vegan, halal, and nut-free foods instantly.",
   metadataBase: new URL(SITE_URL),
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
-  alternates: { canonical: '/' },
   openGraph: {
     type: "website",
-    url: SITE_URL,
     siteName: SITE_NAME,
     locale: "en_US",
   },

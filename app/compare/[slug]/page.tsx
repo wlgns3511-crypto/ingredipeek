@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${a.name} vs ${b.name} - Nutrition & Ingredient Comparison`,
     description: `Compare ${a.name} (${fmt(a.calories)} cal) vs ${b.name} (${fmt(b.calories)} cal). Side-by-side nutrition facts, allergens, and dietary information.`,
     alternates: { canonical: `/compare/${slug}` },
+    openGraph: { url: `/compare/${slug}` },
   };
 }
 

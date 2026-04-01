@@ -103,6 +103,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${config.title} - Complete List`,
     description: config.metaDesc,
+    alternates: { canonical: `${SITE_URL}/allergen/${type}/` },
     openGraph: {
       title: `${config.title} | IngrediPeek`,
       description: config.metaDesc,
