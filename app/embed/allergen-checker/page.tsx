@@ -4,6 +4,7 @@ import { AllergenChecker } from "@/components/AllergenChecker";
 export const metadata: Metadata = {
   title: "Allergen Checker - Embeddable Widget",
   robots: "noindex, nofollow",
+  openGraph: { url: "/embed/allergen-checker/" },
 };
 
 export default function EmbedAllergenCheckerPage() {

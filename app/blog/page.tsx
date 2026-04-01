@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description:
     "Expert guides on reading food labels, identifying hidden ingredients, and making informed choices about what's in your food.",
   alternates: { canonical: "/blog/" },
+  openGraph: { url: "/blog/" },
 };
 
 function formatDate(dateStr: string) {

@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Terms of Service - IngrediPeek",
   description: "Terms of service for IngrediPeek food allergen and ingredient checker.",
   alternates: { canonical: "/terms/" },
+  openGraph: { url: "/terms/" },
 };
 
 export default function TermsPage() {

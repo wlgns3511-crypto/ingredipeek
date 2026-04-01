@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Contact IngrediPeek",
   description: "Contact IngrediPeek for data corrections, partnership inquiries, or general questions about our food allergen database.",
   alternates: { canonical: "/contact/" },
+  openGraph: { url: "/contact/" },
 };
 
 export default function ContactPage() {

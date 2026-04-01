@@ -3,7 +3,9 @@ import { AdSlot } from "@/components/AdSlot";
 import { AllergenChecker } from "@/components/AllergenChecker";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = { alternates: { canonical: "/" },
+  openGraph: { url: "/" },
+};
 
 
 const CATEGORIES = [
