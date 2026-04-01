@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
     "/sitemap.xml": ["./data/**"],
     "/feed.xml": ["./data/**"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.ingredipeek.com" }],
+        destination: "https://ingredipeek.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
