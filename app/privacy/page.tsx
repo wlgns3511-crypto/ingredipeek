@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 export const metadata: Metadata = {
   title: "Privacy Policy - IngrediPeek",
   description: "IngrediPeek privacy policy. How we collect, use, and protect your information.",
+  alternates: { canonical: "/privacy/" },
 };
 
 export default function PrivacyPage() {
@@ -58,7 +59,8 @@ export default function PrivacyPage() {
                 className="text-green-700 hover:underline"
               >
                 Google Ads Settings
-              </a>.
+              </a>{" "}or visit{" "}
+              <a href="https://www.aboutads.info/choices/" className="text-green-700 hover:underline" target="_blank" rel="noopener noreferrer">www.aboutads.info</a>.
             </p>
           </section>
 

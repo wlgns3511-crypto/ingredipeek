@@ -1,6 +1,10 @@
 import { getRecentProducts, getAllBrands } from "@/lib/db";
 import { AdSlot } from "@/components/AdSlot";
 import { AllergenChecker } from "@/components/AllergenChecker";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
 
 const CATEGORIES = [
   {

@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 export const metadata: Metadata = {
   title: "Contact IngrediPeek",
   description: "Contact IngrediPeek for data corrections, partnership inquiries, or general questions about our food allergen database.",
+  alternates: { canonical: "/contact/" },
 };
 
 export default function ContactPage() {

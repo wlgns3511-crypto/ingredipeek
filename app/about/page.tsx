@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "About IngrediPeek - Food Allergen & Ingredient Checker",
   description:
     "Learn about IngrediPeek, the trusted food allergen and ingredient reference. How we source data, our mission, and how to use our tools safely.",
+  alternates: { canonical: "/about/" },
 };
 
 export default function AboutPage() {

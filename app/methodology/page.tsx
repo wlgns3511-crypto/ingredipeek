@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Our Methodology",
   description: "Learn how IngredIPeek collects, processes, and verifies food product ingredients, nutrition, and allergen data.",
+  alternates: { canonical: "/methodology/" },
 };
 
 export default function MethodologyPage() {

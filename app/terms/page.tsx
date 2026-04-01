@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 export const metadata: Metadata = {
   title: "Terms of Service - IngrediPeek",
   description: "Terms of service for IngrediPeek food allergen and ingredient checker.",
+  alternates: { canonical: "/terms/" },
 };
 
 export default function TermsPage() {
