@@ -10,11 +10,12 @@ interface Props {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q } = await searchParams;
-  if (!q) return { title: "Search Products", alternates: { canonical: "/search/" } };
+  if (!q) return { title: "Search Products", alternates: { canonical: "/search/" }, openGraph: { url: "/search/" } };
   return {
     title: `"${q}" - Allergen Search Results`,
     description: `Search results for "${q}". Check allergens, ingredients, and dietary compatibility.`,
     alternates: { canonical: "/search/" },
+    openGraph: { url: "/search/" },
     robots: { index: false, follow: false },
   };
 }
