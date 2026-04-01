@@ -55,14 +55,14 @@ export default function ContactPage() {
             Send us an email and we&apos;ll respond within 2-3 business days.
           </p>
           <a
-            href="mailto:hello@ingredipeek.com"
+            href="mailto:datapeekfacts@gmail.com"
             className="inline-flex items-center gap-2 bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-800 transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
             </svg>
-            hello@ingredipeek.com
+            datapeekfacts@gmail.com
           </a>
         </div>
 
