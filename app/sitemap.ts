@@ -14,7 +14,7 @@ const ALLERGEN_TYPES = [
   "vegetarian",
 ];
 
-export const revalidate = 86400;
+export const revalidate = false;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
