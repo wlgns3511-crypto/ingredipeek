@@ -28,7 +28,7 @@ export const dynamicParams = false;
 export const revalidate = false;
 
 export async function generateStaticParams() {
-  const slugs = getAllProductSlugs(500);
+  const slugs = getAllProductSlugs(1500);
   return slugs.map((s) => ({ slug: s.slug }));
 }
 

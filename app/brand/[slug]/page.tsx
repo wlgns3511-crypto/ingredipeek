@@ -12,7 +12,7 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  const brands = getAllBrands(500);
+  const brands = getAllBrands(1000);
   return brands.map((b) => ({ slug: getBrandSlug(b.brand) }));
 }
 
