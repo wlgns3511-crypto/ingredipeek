@@ -16,6 +16,7 @@ import { EditorNote } from "@/components/EditorNote";
 import { DidYouKnow } from "@/components/DidYouKnow";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { CrossSiteLinks } from "@/components/CrossSiteLinks";
+import { InsightCards } from "@/components/InsightCards";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -213,6 +214,8 @@ export default async function ProductPage({ params }: Props) {
               })}
             </div>
           </section>
+
+          <InsightCards product={product} />
 
           {/* Data Insights */}
           {(() => {

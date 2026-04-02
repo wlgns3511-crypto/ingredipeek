@@ -280,6 +280,34 @@ export function getGlobalAvgCalories(): number {
   return Math.round(row.avg);
 }
 
+// --- Ranking helpers ---
+
+export function getNutriScoreRank(score: string): { rank: number; total: number } {
+  const total = (getDb().prepare("SELECT COUNT(*) as c FROM products WHERE nutriscore IS NOT NULL AND slug IS NOT NULL").get() as { c: number }).c;
+  const order = ['a', 'b', 'c', 'd', 'e'];
+  const idx = order.indexOf(score.toLowerCase());
+  if (idx === -1) return { rank: 0, total };
+  const betterCount = (getDb().prepare(
+    `SELECT COUNT(*) as c FROM products WHERE nutriscore IS NOT NULL AND slug IS NOT NULL AND LOWER(nutriscore) < ?`
+  ).get(score.toLowerCase()) as { c: number }).c;
+  return { rank: betterCount + 1, total };
+}
+
+export function getNovaGroupDistribution(): Record<number, number> {
+  const rows = getDb().prepare(
+    "SELECT nova_group, COUNT(*) as c FROM products WHERE nova_group IS NOT NULL AND slug IS NOT NULL GROUP BY nova_group"
+  ).all() as { nova_group: number; c: number }[];
+  const dist: Record<number, number> = {};
+  for (const r of rows) dist[r.nova_group] = r.c;
+  return dist;
+}
+
+export function countAllergenFreeProducts(): number {
+  return (getDb().prepare(
+    "SELECT COUNT(*) as c FROM products WHERE slug IS NOT NULL AND allergen_milk = 0 AND allergen_gluten = 0 AND allergen_nuts = 0 AND allergen_soy = 0 AND allergen_eggs = 0 AND allergen_fish = 0 AND allergen_shellfish = 0 AND allergen_peanuts = 0"
+  ).get() as { c: number }).c;
+}
+
 export function getRelatedProducts(categories: string | null, excludeSlug: string, limit = 6): Product[] {
   if (!categories) {
     return getDb()
