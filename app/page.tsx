@@ -1,6 +1,7 @@
 import { getRecentProducts, getAllBrands } from "@/lib/db";
 import { AdSlot } from "@/components/AdSlot";
 import { AllergenChecker } from "@/components/AllergenChecker";
+import { PopularEntities } from "@/components/upgrades/PopularEntities";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { alternates: { canonical: "/" },
@@ -92,6 +93,17 @@ export default function Home() {
           </button>
         </form>
       </section>
+
+      <PopularEntities
+        heading="Popular Products"
+        items={recent.map(p => ({
+          name: p.name,
+          href: `/product/${p.slug}/`,
+          stat: p.ingredients_text ? `${p.ingredients_text.split(',').length} ingredients` : undefined,
+        }))}
+        viewAllHref="/rankings"
+        viewAllLabel="View all products →"
+      />
 
       {/* Diet Categories */}
       <section className="mb-12">

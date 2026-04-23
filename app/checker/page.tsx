@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Allergen Checker - Scan Ingredients for Big 9 Allergens",
   description:
     "Paste any ingredient list to instantly detect the Big 9 allergens: milk, eggs, wheat, soy, peanuts, tree nuts, fish, shellfish, and sesame. Free and instant results.",
-  alternates: { canonical: "/checker" },
+  alternates: { canonical: "/checker/" },
   openGraph: { url: "/checker/" },
 };
 

@@ -4,6 +4,8 @@ import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import { AdSlot } from "@/components/AdSlot";
 import { AuthorBox } from "@/components/AuthorBox";
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
 }
@@ -51,7 +53,7 @@ export default async function BlogPostPage({
   const allPosts = getAllPosts().filter((p) => p.slug !== slug);
   const related = allPosts
     .filter((p) => p.category === post.category)
-    .slice(0, 3);
+    ;
   const others = allPosts.filter((p) => p.category !== post.category).slice(0, 3 - related.length);
   const suggestions = [...related, ...others];
 
@@ -69,15 +71,9 @@ export default async function BlogPostPage({
             datePublished: post.publishedAt,
             dateModified: post.updatedAt ?? post.publishedAt,
             author: {
-              "@type": "Person",
-              name: "IngredIPeek Food Science Team",
-              description: "Nutrition science and food ingredient research",
-              url: "https://ingredipeek.com/about/",
-              worksFor: {
-                "@type": "Organization",
-                name: "IngredIPeek",
-                url: "https://ingredipeek.com",
-              },
+              "@type": "Organization",
+              name: "IngrediPeek Editorial Team",
+              url: "https://ingredipeek.com/editorial-policy/",
             },
             publisher: {
               "@type": "Organization",

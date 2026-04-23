@@ -91,6 +91,8 @@ interface Props {
   params: Promise<{ type: string }>;
 }
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   return Object.keys(ALLERGEN_CONFIG).map((type) => ({ type }));
 }

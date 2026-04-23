@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getComparisonBySlug, getProductBySlug, getAllComparisonSlugs, getRandomProducts } from "@/lib/db";
+import { notFound, permanentRedirect } from "next/navigation";
+import { getComparisonBySlug, getProductBySlug, getAllComparisonSlugs } from "@/lib/db";
 import { faqJsonLd, breadcrumbJsonLd } from "@/lib/schema";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { AdSlot } from "@/components/AdSlot";
@@ -9,11 +9,25 @@ import { ComparisonBar } from "@/components/ComparisonBar";
 
 interface Props { params: Promise<{ slug: string }> }
 
+const STATIC_COMPARISONS = getAllComparisonSlugs(100).map((c) => c.slug);
+const STATIC_COMPARISON_SET = new Set(STATIC_COMPARISONS);
+
+function toCanonicalComparisonSlug(slug: string): string | null {
+  const comp = getComparisonBySlug(slug);
+  if (!comp) return null;
+  return [comp.product_a, comp.product_b].sort().join("-vs-");
+}
+
 export const dynamicParams = false;
-export const revalidate = false;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  return getAllComparisonSlugs(500).map((c) => ({ slug: c.slug }));
+  return STATIC_COMPARISONS.flatMap((slug) => {
+    const comp = getComparisonBySlug(slug);
+    if (!comp) return [{ slug }];
+    const reverseSlug = `${comp.product_b}-vs-${comp.product_a}`;
+    return reverseSlug === slug ? [{ slug }] : [{ slug }, { slug: reverseSlug }];
+  });
 }
 
 function fmt(v: number | null | undefined): string {
@@ -23,7 +37,9 @@ function fmt(v: number | null | undefined): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const comp = getComparisonBySlug(slug);
+  const canonicalSlug = toCanonicalComparisonSlug(slug);
+  if (!canonicalSlug || !STATIC_COMPARISON_SET.has(canonicalSlug)) return {};
+  const comp = getComparisonBySlug(canonicalSlug);
   if (!comp) return {};
   const a = getProductBySlug(comp.product_a);
   const b = getProductBySlug(comp.product_b);
@@ -31,40 +47,43 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${a.name} vs ${b.name} - Nutrition & Ingredient Comparison`,
     description: `Compare ${a.name} (${fmt(a.calories)} cal) vs ${b.name} (${fmt(b.calories)} cal). Side-by-side nutrition facts, allergens, and dietary information.`,
-    alternates: { canonical: `/compare/${slug}` },
-    openGraph: { url: `/compare/${slug}` },
+    alternates: { canonical: `/compare/${canonicalSlug}/` },
+    openGraph: { url: `/compare/${canonicalSlug}/` },
   };
 }
 
 export default async function ComparePage({ params }: Props) {
   const { slug } = await params;
-  const comp = getComparisonBySlug(slug);
+  const canonicalSlug = toCanonicalComparisonSlug(slug);
+  if (!canonicalSlug || !STATIC_COMPARISON_SET.has(canonicalSlug)) notFound();
+  if (slug !== canonicalSlug) {
+    permanentRedirect(`/compare/${canonicalSlug}/`);
+  }
+  const comp = getComparisonBySlug(canonicalSlug);
   if (!comp) notFound();
 
   const a = getProductBySlug(comp.product_a);
   const b = getProductBySlug(comp.product_b);
   if (!a || !b) notFound();
 
-  // Get 30 random products and form 15 unique pairs
-  const randomPool = getRandomProducts(30).filter((p) => p.slug);
-  const randomPairs: { slugA: string; nameA: string; slugB: string; nameB: string; compareSlug: string }[] = [];
-  const seenPairs = new Set<string>();
-  for (let i = 0; i < randomPool.length - 1 && randomPairs.length < 15; i += 2) {
-    const pA = randomPool[i];
-    const pB = randomPool[i + 1];
-    if (!pA?.slug || !pB?.slug || pA.slug === pB.slug) continue;
-    const sorted = [pA.slug, pB.slug].sort();
-    const pairKey = `${sorted[0]}-vs-${sorted[1]}`;
-    if (seenPairs.has(pairKey)) continue;
-    seenPairs.add(pairKey);
-    randomPairs.push({
-      slugA: sorted[0],
-      nameA: sorted[0] === pA.slug ? pA.name : pB.name,
-      slugB: sorted[1],
-      nameB: sorted[1] === pB.slug ? pB.name : pA.name,
-      compareSlug: pairKey,
-    });
-  }
+  const randomPairs = STATIC_COMPARISONS
+    .filter((candidate) => candidate !== canonicalSlug)
+    .slice(0, 15)
+    .map((candidate) => {
+      const candidateComp = getComparisonBySlug(candidate);
+      if (!candidateComp) return null;
+      const productA = getProductBySlug(candidateComp.product_a);
+      const productB = getProductBySlug(candidateComp.product_b);
+      if (!productA || !productB) return null;
+      return {
+        slugA: productA.slug!,
+        nameA: productA.name,
+        slugB: productB.slug!,
+        nameB: productB.name,
+        compareSlug: candidate,
+      };
+    })
+    .filter((pair): pair is { slugA: string; nameA: string; slugB: string; nameB: string; compareSlug: string } => pair !== null);
 
   const crumbs = [
     { label: "Home", href: "/" },

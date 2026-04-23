@@ -11,6 +11,8 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const brands = getAllBrands(1000);
   return brands.map((b) => ({ slug: getBrandSlug(b.brand) }));
@@ -122,7 +124,7 @@ export default async function BrandPage({ params }: Props) {
                   </p>
                   {product.categories && (
                     <p className="text-xs text-slate-500 mt-0.5">
-                      {product.categories.split(",").slice(0, 2).join(", ")}
+                      {product.categories.split(",").join(", ")}
                     </p>
                   )}
                   <div className="flex flex-wrap gap-1 mt-2">
