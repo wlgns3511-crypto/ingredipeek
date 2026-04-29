@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TrustMetaStrip } from "@/components/TrustMetaStrip";
+import { REGULATORY_REFS } from "@/lib/content-helpers";
 
 export const metadata: Metadata = {
   title: "Our Methodology — How IngredIPeek Builds Its Food Data",
@@ -223,6 +224,30 @@ export default function MethodologyPage() {
           allergist, dietitian, or physician. For clinical decisions,
           consult a qualified professional.
         </li>
+      </ul>
+
+      <h2>Authority sources we cross-check against</h2>
+      <p>
+        Open Food Facts is our primary catalog, but for additive risk,
+        allergen labeling, and processing classifications we anchor each
+        claim to the original regulator. The links below are the actual
+        canonical pages — if any of these change, the change ripples to
+        every product page on the next deploy.
+      </p>
+      <ul className="not-prose mt-3 mb-6 grid gap-2 sm:grid-cols-2 text-sm">
+        {Object.values(REGULATORY_REFS).map((r) => (
+          <li key={r.url} className="flex items-start gap-2 leading-snug">
+            <span aria-hidden className="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+            <a
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-700 hover:underline"
+            >
+              {r.label}
+            </a>
+          </li>
+        ))}
       </ul>
 
       <h2>Corrections and feedback</h2>

@@ -11,6 +11,7 @@ import {
   formatCategoryLabel,
   formatNutrient,
 } from "@/lib/product-facts";
+import { buildProductCommentary } from "@/lib/product-commentary";
 import { generateAnalysis, generateFAQ, ALLERGEN_LIST, DIET_LIST } from "@/lib/analysis";
 import { productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
 import { generateAutoFaqs } from "@/lib/auto-faqs";
@@ -129,6 +130,7 @@ export default async function ProductPage({ params }: Props) {
   const novaInfo = getNovaInfo(product.nova_group);
   const primaryCat = getPrimaryCategory(product.categories);
   const catFingerprint = primaryCat ? getCategoryFingerprint(primaryCat) : null;
+  const commentary = buildProductCommentary(product, additiveProfile, novaInfo, catFingerprint);
   const randomProducts = getRandomProducts(20).filter(
     (p) => p.slug && p.slug !== slug && STATIC_COMPARISON_SET.has(toCanonicalComparisonSlug(slug, p.slug))
   );
@@ -498,6 +500,11 @@ export default async function ProductPage({ params }: Props) {
           {additiveProfile.hasIngredientsText && (
             <section>
               <h2 className="text-lg font-bold mb-3">Additive Profile</h2>
+              {commentary.additiveSentence && (
+                <p className="mb-3 text-sm text-slate-700 italic leading-relaxed">
+                  {commentary.additiveSentence}
+                </p>
+              )}
               {additiveProfile.matched.length === 0 ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-900">
                   <p className="font-medium">No flagged additives detected.</p>
@@ -582,6 +589,13 @@ export default async function ProductPage({ params }: Props) {
                       <> · most-flagged allergen: {catFingerprint.topAllergen.name} ({catFingerprint.topAllergen.pct.toFixed(1)}%)</>
                     )}
                   </p>
+                  {(commentary.comparisonSentence || commentary.novaSentence) && (
+                    <p className="text-sm text-slate-700 italic leading-relaxed mt-3 pt-3 border-t border-slate-200">
+                      {commentary.comparisonSentence}
+                      {commentary.comparisonSentence && commentary.novaSentence && ' '}
+                      {commentary.novaSentence}
+                    </p>
+                  )}
                 </div>
               )}
 
