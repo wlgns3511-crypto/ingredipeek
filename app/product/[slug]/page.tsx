@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug, getAllProductSlugs, getAllComparisonSlugs, getRelatedProducts, getRandomProducts, getGlobalAvgCalories } from "@/lib/db";
+import { getProductBySlug, getRelatedProducts, getRandomProducts, getGlobalAvgCalories } from "@/lib/db";
+import productKeep from "@/lib/generated/product-keep.json";
+import compareKeep from "@/lib/generated/compare-keep.json";
 import { generateAnalysis, generateFAQ, ALLERGEN_LIST, DIET_LIST } from "@/lib/analysis";
 import { productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
 import { generateAutoFaqs } from "@/lib/auto-faqs";
@@ -29,7 +31,10 @@ import { RelatedEntities } from '@/components/upgrades/RelatedEntities';
 import { TableOfContents } from '@/components/upgrades/TableOfContents';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
-const STATIC_COMPARISON_SET = new Set(getAllComparisonSlugs(5000).map((c) => c.slug));
+// HCU 2026-04-24: was `getAllComparisonSlugs(5000)` — now sourced from the
+// 200-slug compare-keep.json so product pages only link to compare URLs that
+// actually render. Prevents internal 410 links post-middleware cleanup.
+const STATIC_COMPARISON_SET = new Set<string>(compareKeep as string[]);
 
 function toCanonicalComparisonSlug(slugA: string, slugB: string): string {
   return [slugA, slugB].sort().join("-vs-");
@@ -39,12 +44,15 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export const dynamicParams = true;
+export const dynamicParams = false;
 export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  const slugs = getAllProductSlugs(5000);
-  return slugs.map((s) => ({ slug: s.slug }));
+  // HCU 2026-04-24: was `getAllProductSlugs(5000)` against 21,469 products
+  // in the catalog. Collapsed to a 2,000-slug keep-set built from
+  // scripts/build-keep-sets.ts (per-brand cap 15, ingredients >= 50 chars).
+  // The 19k+ dropped slugs are 410'd by middleware.ts for fast deindex.
+  return (productKeep as string[]).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -721,42 +729,13 @@ export default async function ProductPage({ params }: Props) {
                   <p className="text-sm font-medium text-slate-800 line-clamp-2 group-hover:text-green-700">{p.name}</p>
                 </a>
                 {p.brand && <p className="text-xs text-slate-500">{p.brand}</p>}
-                {p.slug && STATIC_COMPARISON_SET.has(toCanonicalComparisonSlug(slug, p.slug)) && (
-                  <a
-                    href={`/compare/${toCanonicalComparisonSlug(slug, p.slug)}/`}
-                    className="text-xs text-green-600 hover:underline mt-1 block"
-                  >
-                    Compare →
-                  </a>
-                )}
+                {/* 2026-04-28 — inline 'Compare →' link 제거 (AdSense scaled-content remediation, /compare/ noindex) */}
               </div>
             ))}
           </div>
         </section>
       )}
-      {/* Discover More Comparisons */}
-      {randomProducts.length > 0 && (
-        <section className="mt-12">
-          <h2 className="text-xl font-bold mb-4">Discover More Comparisons</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {randomProducts.map((p) => {
-              const pair = [slug, p.slug!].sort();
-              const compareSlug = `${pair[0]}-vs-${pair[1]}`;
-              return (
-                <a
-                  key={p.barcode}
-                  href={`/compare/${compareSlug}/`}
-                  className="block border border-slate-200 rounded-lg p-3 hover:border-green-300 hover:shadow-sm transition-all text-sm"
-                >
-                  <span className="font-medium text-green-700">{product.name}</span>
-                  <span className="text-slate-400 mx-1">vs</span>
-                  <span className="font-medium text-slate-700">{p.name}</span>
-                </a>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      {/* 2026-04-28 — 'Discover More Comparisons' section 제거 (AdSense scaled-content remediation, /compare/ noindex) */}
     </>
   );
 }

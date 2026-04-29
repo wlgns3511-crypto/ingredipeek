@@ -49,6 +49,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: `Compare ${a.name} (${fmt(a.calories)} cal) vs ${b.name} (${fmt(b.calories)} cal). Side-by-side nutrition facts, allergens, and dietary information.`,
     alternates: { canonical: `/compare/${canonicalSlug}/` },
     openGraph: { url: `/compare/${canonicalSlug}/` },
+    // 2026-04-26 noindex (HCU/AdSense scaled-content remediation): GSC reports
+    // 219+ /compare/ as "Duplicate without canonical" — same precedent as
+    // 14-site Stage 1 4/26 sweep. Pages stay live (dynamicParams=false,
+    // 404-safe) for direct visitors; /product/ + /brand/ remain canonical.
+    robots: { index: false, follow: true },
   };
 }
 

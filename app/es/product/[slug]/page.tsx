@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug, getAllProductSlugs } from "@/lib/db";
+import { getProductBySlug } from "@/lib/db";
 import { generateAnalysis, ALLERGEN_LIST, DIET_LIST } from "@/lib/analysis";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { AllergenBadge } from "@/components/AllergenBadge";
@@ -10,11 +10,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
 interface Props { params: Promise<{ slug: string }> }
 
-export const dynamicParams = true;
+export const dynamicParams = false;
 export const revalidate = 86400;
 
+// HCU 2026-04-24: was generating 1,000 /es/product/<slug>/ pages. GSC
+// "crawled-not-indexed" showed ~474 Spanish product pages rejected by
+// Google — sparse translation + no query traffic makes these net-negative.
+// Empty param list + dynamicParams=false means Next prerenders zero ES
+// product pages; middleware.ts 410s any request under /es/product/*.
+// /es/ landing stays (singleton, hreflang target).
 export async function generateStaticParams() {
-  return getAllProductSlugs(1000).map((s) => ({ slug: s.slug }));
+  return [];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

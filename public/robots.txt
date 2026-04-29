@@ -3,6 +3,8 @@ Allow: /
 Disallow: /api/
 Disallow: /_next/
 Disallow: /embed/
+# 2026-04-28 — AdSense scaled-content remediation: /compare/* (4/18 doorway-thin noindex)
+Disallow: /compare/
 
 # ── SEO scraper tools (zero user-facing traffic) ──
 User-Agent: AhrefsBot
@@ -73,5 +75,12 @@ Disallow: /
 User-Agent: facebookexternalhit
 Disallow: /compare/
 Disallow: /county-compare/
+
+# ── AdSense / Ads quality crawlers — explicit scaled-content exclusion (2026-04-28) ──
+User-Agent: Mediapartners-Google
+Disallow: /compare/
+
+User-Agent: AdsBot-Google
+Disallow: /compare/
 
 Sitemap: https://ingredipeek.com/sitemap.xml
