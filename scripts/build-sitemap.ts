@@ -5,20 +5,35 @@
  * PRUNING HISTORY (post-HCU March 2026):
  *   Pre-prune: ~44,000 URLs. Dominated by /es/product/[slug] × 21,469 —
  *              thin Spanish translation over identical ingredient data.
- *   2026-04-22: Option B+ prune (conservative). GSC shows real signal on EN
- *              /product/[slug] — products have genuine ingredient-lookup intent.
- *              Drop /es/product/ only. Keep all 21,469 EN products.
- *              Route stays live via dynamicParams=true.
+ *   2026-04-22: Option B+ prune (conservative). Drop /es/product/ only.
+ *              Kept all 21,469 EN products on dynamicParams=true.
+ *   2026-04-24: HCU cardinality collapse. 1-month-old site, 41k
+ *              discovered-not-indexed, 8.3k soft-404-ish. Programmatic
+ *              21k EN products was too wide a moat for a new site to
+ *              defend. Collapsed to the 2,000-slug keep-set built by
+ *              scripts/build-keep-sets.ts (top-brand, real-ingredients
+ *              filter). Middleware 410s the ~19k drop. Compare stays at
+ *              100 (already capped). Run build-keep-sets.ts BEFORE this.
  *
  * USAGE:
  *   npx tsx scripts/build-sitemap.ts
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { getAllProductSlugsForSitemap, getAllBrands, getBrandSlug, getAllComparisonSlugs, getRotatingComparisonSlugs } from '../lib/db';
+import { getAllBrands, getBrandSlug } from '../lib/db';
 import { getAllPosts } from '../lib/blog';
 import { getAllStates } from '../lib/states-data';
 import { getAllGuides } from '../lib/guides';
+
+// HCU 2026-04-24: sitemap now mirrors the render keep-set exactly. If these
+// diverge we reintroduce the soft-404 gap between sitemap claims and live
+// HTTP responses that Google flagged as the primary index-bloat signal.
+const productKeep: string[] = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '..', 'lib', 'generated', 'product-keep.json'), 'utf8'),
+);
+const compareKeep: string[] = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '..', 'lib', 'generated', 'compare-keep.json'), 'utf8'),
+);
 
 const SITE_URL = 'https://ingredipeek.com';
 const NOW = new Date().toISOString().split('T')[0];
@@ -79,29 +94,40 @@ for (const s of getAllStates()) {
   add({ url: `${SITE_URL}/state/${s.slug}/`, priority: '0.7', changefreq: 'monthly' });
 }
 
-// Product pages — full valid EN set, long-tail served via ISR fallback.
-// 2026-04-22 HCU-defense: /es/product/ × 21,469 DROPPED — thin Spanish
-// translation over identical ingredient data, zero GSC signal, competes
-// with real Spanish ingredient databases. Route stays live via
-// dynamicParams=true; existing /es/product/[slug] URLs remain 200.
-// Conservative prune — keep all 21,469 EN products (real clicks on these).
-for (const p of getAllProductSlugsForSitemap(50000)) {
-  add({ url: `${SITE_URL}/product/${p.slug}/`, priority: '0.8', changefreq: 'monthly' });
+// Product pages — 2,000 keep-set only (HCU 2026-04-24).
+// See scripts/build-keep-sets.ts for selection rules. Middleware 410s any
+// /product/<slug>/ not in this set, so the sitemap and the live surface are
+// guaranteed 1:1.
+for (const slug of productKeep) {
+  add({ url: `${SITE_URL}/product/${slug}/`, priority: '0.8', changefreq: 'monthly' });
 }
 
-// Comparison pages — CAPPED at 100 to match page.tsx (2026-04-22 HCU-defense).
-// Previously emitted 5000 stable + rotating (far exceeded page prerender limit of 100).
-const stableComps = getAllComparisonSlugs(100);
-for (const c of stableComps) {
-  add({ url: `${SITE_URL}/compare/${c.slug}/`, priority: '0.6', changefreq: 'monthly' });
-}
+// ─── /compare/ pairs DROPPED 2026-04-26 (HCU/AdSense scaled-content remediation) ──
+// Precedent: 14-site Stage 1 sweep 4/26 (safecitypeek, homepricepeek, etc.)
+// page.tsx now sets robots: {index:false, follow:true}. Announcing noindex'd
+// derivative pages in sitemap is a contradiction + crawl-budget waste.
+// Pages still render (dynamicParams=false, 404-safe) for direct visitors.
+// /compare/ index hub kept (real product page); ~100 pair URLs dropped.
+add({ url: `${SITE_URL}/compare/`, priority: '0.8', changefreq: 'monthly' });
+// for (const slug of compareKeep) {
+//   const m = slug.match(/^(.+)-vs-(.+)$/);
+//   if (!m) continue;
+//   // Emit only the canonical ordering (a < b).
+//   if (m[1] < m[2]) {
+//     add({ url: `${SITE_URL}/compare/${slug}/`, priority: '0.6', changefreq: 'monthly' });
+//   }
+// }
 
 // ─── Cardinality guard ────────────────────────────────────────────────────
-if (entries.length > 30000 && !process.env.SITEMAP_LARGE_OK) {
+// HCU 2026-04-24: budget is ~2,300 (2,000 products + ~100 canonical compares
+// + ~200 static/brand/guide/blog/state). If this ever exceeds 5K unintended,
+// something expanded — fail loud so we don't silently regress into the
+// 44K bloat that caused the HCU hit in the first place.
+if (entries.length > 5000 && !process.env.SITEMAP_LARGE_OK) {
   throw new Error(
-    `ingredipeek sitemap has ${entries.length.toLocaleString()} URLs — Option B+ budget is ~23K.\n` +
-      `Did /es/product/ (21K) get re-added?\n` +
-      `That's exactly the loop that caused the original cardinality collapse.\n` +
+    `ingredipeek sitemap has ${entries.length.toLocaleString()} URLs — HCU 2026-04-24 budget is ~2,300.\n` +
+      `Either the product keep-set grew past 2K, /es/product/ came back, or /compare/ uncapped.\n` +
+      `Check scripts/build-keep-sets.ts and app/*/generateStaticParams before expanding.\n` +
       `Run with SITEMAP_LARGE_OK=1 if you genuinely meant to expand the tier.`,
   );
 }
