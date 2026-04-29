@@ -69,19 +69,23 @@ const NOVA_LABEL: Record<number, string> = {
 
 export function NovaGroup({ group }: NovaProps) {
   if (!group) return null;
-
+  // 3.43 is the OFF-import mean placeholder for products where NOVA could
+  // not be derived — render as Unrated instead of a fractional badge.
+  const isUnrated = !Number.isInteger(group) || group < 1 || group > 4;
   return (
     <div>
       <p className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">NOVA Group</p>
       <div className="flex items-center gap-2">
         <div
           className={`w-10 h-10 rounded flex items-center justify-center text-white font-bold text-lg ${
-            NOVA_COLOR[group] || "bg-slate-300"
+            isUnrated ? "bg-slate-300" : NOVA_COLOR[group] || "bg-slate-300"
           }`}
         >
-          {group}
+          {isUnrated ? "—" : group}
         </div>
-        <span className="text-sm text-slate-600">{NOVA_LABEL[group] || `Group ${group}`}</span>
+        <span className="text-sm text-slate-600">
+          {isUnrated ? "Unrated — NOVA group not derived" : NOVA_LABEL[group] || `Group ${group}`}
+        </span>
       </div>
     </div>
   );

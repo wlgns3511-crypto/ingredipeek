@@ -3,6 +3,14 @@ import { notFound } from "next/navigation";
 import { getProductBySlug, getRelatedProducts, getRandomProducts, getGlobalAvgCalories } from "@/lib/db";
 import productKeep from "@/lib/generated/product-keep.json";
 import compareKeep from "@/lib/generated/compare-keep.json";
+import {
+  getAdditiveProfile,
+  getNovaInfo,
+  getCategoryFingerprint,
+  getPrimaryCategory,
+  formatCategoryLabel,
+  formatNutrient,
+} from "@/lib/product-facts";
 import { generateAnalysis, generateFAQ, ALLERGEN_LIST, DIET_LIST } from "@/lib/analysis";
 import { productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
 import { generateAutoFaqs } from "@/lib/auto-faqs";
@@ -117,6 +125,10 @@ export default async function ProductPage({ params }: Props) {
   const seenQuestions = new Set(baseFaqItems.map(f => f.question.toLowerCase()));
   const faqItems = [...baseFaqItems, ...autoFaqItems.filter(f => !seenQuestions.has(f.question.toLowerCase()))];
   const related = getRelatedProducts(product.categories, slug, 6);
+  const additiveProfile = getAdditiveProfile(product.ingredients_text);
+  const novaInfo = getNovaInfo(product.nova_group);
+  const primaryCat = getPrimaryCategory(product.categories);
+  const catFingerprint = primaryCat ? getCategoryFingerprint(primaryCat) : null;
   const randomProducts = getRandomProducts(20).filter(
     (p) => p.slug && p.slug !== slug && STATIC_COMPARISON_SET.has(toCanonicalComparisonSlug(slug, p.slug))
   );
@@ -479,6 +491,106 @@ export default async function ProductPage({ params }: Props) {
                   {product.ingredients_text}
                 </p>
               </div>
+            </section>
+          )}
+
+          {/* Additive Profile — first-party match against the controversial-additive lookup */}
+          {additiveProfile.hasIngredientsText && (
+            <section>
+              <h2 className="text-lg font-bold mb-3">Additive Profile</h2>
+              {additiveProfile.matched.length === 0 ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-900">
+                  <p className="font-medium">No flagged additives detected.</p>
+                  <p className="text-xs text-green-800 mt-1">
+                    We scanned this product&apos;s ingredient list against {""}
+                    <a href="/methodology/" className="underline">{"our 50-additive watchlist"}</a> {""}
+                    and found none of the additives commonly flagged by IARC, EFSA, EWG, or major regulators.
+                  </p>
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-xl p-4 bg-white">
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-3 pb-3 border-b border-slate-100">
+                    <span className="text-2xl font-bold tabular-nums text-slate-900">{additiveProfile.matched.length}</span>
+                    <span className="text-sm text-slate-600">flagged additive{additiveProfile.matched.length === 1 ? "" : "s"}</span>
+                    <span className="ml-auto text-xs text-slate-500">
+                      Risk weight {additiveProfile.score} · Tier 1: {additiveProfile.byTier[1]} ·
+                      Tier 2: {additiveProfile.byTier[2]} ·
+                      Tier 3: {additiveProfile.byTier[3]}
+                    </span>
+                  </div>
+                  <ul className="space-y-3">
+                    {additiveProfile.matched.map((a) => (
+                      <li key={a.id} className="flex gap-3 text-sm">
+                        <span
+                          className={`shrink-0 inline-flex items-center justify-center w-7 h-7 rounded text-xs font-bold ${
+                            a.tier === 1
+                              ? "bg-red-100 text-red-800"
+                              : a.tier === 2
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-slate-100 text-slate-700"
+                          }`}
+                          aria-label={`Tier ${a.tier}`}
+                        >
+                          T{a.tier}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-900">
+                            {a.name}
+                            {a.ename && <span className="text-slate-400 font-normal ml-1.5">({a.ename})</span>}
+                          </p>
+                          <p className="text-xs text-slate-600 leading-relaxed">{a.summary}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                    Tier 1 = banned or under active restriction in major jurisdictions, IARC 1/2A, or replicated harm signal in human studies.
+                    Tier 2 = IARC 2B, EU mandatory warning label, or mixed evidence.
+                    Tier 3 = debated; mostly GRAS but specific subgroups may want to avoid. {""}
+                    <a href="/methodology/" className="underline">Methodology →</a>
+                  </p>
+                </div>
+              )}
+
+              {/* Same-category fingerprint: only when category match yields >= 5 products */}
+              {catFingerprint && catFingerprint.productCount >= 5 && (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">
+                    {formatCategoryLabel(catFingerprint.category)} — {catFingerprint.productCount.toLocaleString()} products in this catalog
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-500">Avg calories</p>
+                      <p className="font-semibold tabular-nums text-slate-900">{formatNutrient(catFingerprint.avgCalories, "kcal", 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Avg sugars</p>
+                      <p className="font-semibold tabular-nums text-slate-900">{formatNutrient(catFingerprint.avgSugars)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Avg sat. fat</p>
+                      <p className="font-semibold tabular-nums text-slate-900">{formatNutrient(catFingerprint.avgSaturatedFat)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Avg salt</p>
+                      <p className="font-semibold tabular-nums text-slate-900">{formatNutrient(catFingerprint.avgSalt)}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-3">
+                    NOVA distribution: {catFingerprint.novaDistribution.rated[1]}/{catFingerprint.novaDistribution.rated[2]}/{catFingerprint.novaDistribution.rated[3]}/{catFingerprint.novaDistribution.rated[4]} (groups 1-4) · {catFingerprint.novaDistribution.unrated} unrated
+                    {catFingerprint.topAllergen && catFingerprint.topAllergen.pct > 0 && (
+                      <> · most-flagged allergen: {catFingerprint.topAllergen.name} ({catFingerprint.topAllergen.pct.toFixed(1)}%)</>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {novaInfo.isUnrated && product.nova_group != null && (
+                <p className="mt-3 text-xs text-slate-500">
+                  NOVA group is shown as <em>unrated</em> for this product — Open Food Facts could not derive a 1-4 classification
+                  from the available ingredient and processing metadata.
+                </p>
+              )}
             </section>
           )}
 

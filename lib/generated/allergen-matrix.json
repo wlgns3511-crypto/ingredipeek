@@ -1,0 +1,142 @@
+{
+  "generatedAt": "2026-04-29",
+  "totalProducts": 21469,
+  "perAllergen": {
+    "milk": {
+      "total": 6499,
+      "coOccur": [
+        {
+          "allergen": "soy",
+          "pct": 45.1
+        },
+        {
+          "allergen": "gluten",
+          "pct": 38.8
+        },
+        {
+          "allergen": "eggs",
+          "pct": 16.7
+        }
+      ]
+    },
+    "gluten": {
+      "total": 5358,
+      "coOccur": [
+        {
+          "allergen": "soy",
+          "pct": 58.3
+        },
+        {
+          "allergen": "milk",
+          "pct": 47.1
+        },
+        {
+          "allergen": "eggs",
+          "pct": 20.7
+        }
+      ]
+    },
+    "nuts": {
+      "total": 1348,
+      "coOccur": [
+        {
+          "allergen": "milk",
+          "pct": 45.6
+        },
+        {
+          "allergen": "soy",
+          "pct": 43.5
+        },
+        {
+          "allergen": "gluten",
+          "pct": 29
+        }
+      ]
+    },
+    "soy": {
+      "total": 5663,
+      "coOccur": [
+        {
+          "allergen": "gluten",
+          "pct": 55.2
+        },
+        {
+          "allergen": "milk",
+          "pct": 51.7
+        },
+        {
+          "allergen": "eggs",
+          "pct": 19.3
+        }
+      ]
+    },
+    "eggs": {
+      "total": 1675,
+      "coOccur": [
+        {
+          "allergen": "gluten",
+          "pct": 66.3
+        },
+        {
+          "allergen": "soy",
+          "pct": 65.2
+        },
+        {
+          "allergen": "milk",
+          "pct": 64.8
+        }
+      ]
+    },
+    "fish": {
+      "total": 270,
+      "coOccur": [
+        {
+          "allergen": "soy",
+          "pct": 47.4
+        },
+        {
+          "allergen": "gluten",
+          "pct": 41.1
+        },
+        {
+          "allergen": "milk",
+          "pct": 24.4
+        }
+      ]
+    },
+    "shellfish": {
+      "total": 90,
+      "coOccur": [
+        {
+          "allergen": "gluten",
+          "pct": 37.8
+        },
+        {
+          "allergen": "soy",
+          "pct": 34.4
+        },
+        {
+          "allergen": "milk",
+          "pct": 27.8
+        }
+      ]
+    },
+    "peanuts": {
+      "total": 774,
+      "coOccur": [
+        {
+          "allergen": "soy",
+          "pct": 53.6
+        },
+        {
+          "allergen": "milk",
+          "pct": 37.1
+        },
+        {
+          "allergen": "nuts",
+          "pct": 35.4
+        }
+      ]
+    }
+  }
+}
