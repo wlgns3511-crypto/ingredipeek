@@ -162,6 +162,29 @@ function main() {
   }
   const compareSlugs = Array.from(compareSet).sort();
 
+  // --- Brand keep-set (brands with >= 5 products) ---
+  // The /brand/[slug]/ route was generating 935 pages by getAllBrands(1000),
+  // and ~43% of those (rank 600-1000) had only 2-4 products, which is too
+  // thin for the transparency-tier and allergen-fingerprint inject we're
+  // adding. Cut to brands with >= 5 products in the catalog. Sites that
+  // need fewer / more can adjust this threshold.
+  type BrandRow = { brand: string; n: number };
+  const brandRows = db.prepare(
+    `SELECT brand, COUNT(*) AS n FROM products
+       WHERE brand IS NOT NULL AND brand != ''
+       GROUP BY brand HAVING n >= 5
+       ORDER BY n DESC`,
+  ).all() as BrandRow[];
+  const brandKeep: { brand: string; slug: string; productCount: number }[] = brandRows.map((r) => ({
+    brand: r.brand,
+    slug: r.brand
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60),
+    productCount: r.n,
+  }));
+
   // --- Write outputs ---
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
@@ -170,6 +193,10 @@ function main() {
 
   const compareOut = path.join(OUT_DIR, 'compare-keep.json');
   fs.writeFileSync(compareOut, JSON.stringify(compareSlugs, null, 0) + '\n');
+
+  const brandOut = path.join(OUT_DIR, 'brand-keep.json');
+  fs.writeFileSync(brandOut, JSON.stringify(brandKeep, null, 0) + '\n');
+  console.log(`[keep-sets] brand-keep.json: ${brandKeep.length} brands (>= 5 products each)`);
 
   // --- Audit log ---
   console.log(`[keep-sets] product-keep.json: ${productSlugs.length} slugs (${baseProductSlugs.length} algorithmic + ${productGscAdded} GSC-evidence)`);

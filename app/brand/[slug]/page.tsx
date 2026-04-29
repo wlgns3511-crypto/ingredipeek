@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductsByBrandSlug, getBrandBySlug, getAllBrands, getBrandSlug } from "@/lib/db";
+import { getProductsByBrandSlug } from "@/lib/db";
+import brandKeep from "@/lib/generated/brand-keep.json";
 import { AllergenBadge } from "@/components/AllergenBadge";
 import { AdSlot } from "@/components/AdSlot";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { getBrandFingerprint, formatPercent } from "@/lib/product-facts";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
+
+interface BrandKeepEntry { brand: string; slug: string; productCount: number; }
+const BRAND_KEEP = brandKeep as BrandKeepEntry[];
+const BRAND_BY_SLUG = new Map(BRAND_KEEP.map((b) => [b.slug, b.brand]));
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -14,13 +20,16 @@ interface Props {
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  const brands = getAllBrands(1000);
-  return brands.map((b) => ({ slug: getBrandSlug(b.brand) }));
+  // 4/29 brand cut: was getAllBrands(1000) — now sourced from build-keep-sets
+  // brand-keep.json (brands with >= 5 products). 935 → 569 pages, dropping
+  // ~366 brands that had only 2-4 products in the catalog and could not
+  // carry the transparency-tier and allergen-fingerprint inject we add below.
+  return BRAND_KEEP.map((b) => ({ slug: b.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const brand = getBrandBySlug(slug);
+  const brand = BRAND_BY_SLUG.get(slug);
   if (!brand) return { title: "Brand Not Found" };
 
   const title = `${brand} Allergen Information - All Products`;
@@ -40,10 +49,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BrandPage({ params }: Props) {
   const { slug } = await params;
-  const brand = getBrandBySlug(slug);
+  const brand = BRAND_BY_SLUG.get(slug);
   if (!brand) notFound();
 
   const products = getProductsByBrandSlug(slug, 100);
+  const fingerprint = getBrandFingerprint(brand);
 
   // Count diet stats
   const veganCount = products.filter((p) => p.is_vegan === 1).length;
@@ -89,6 +99,58 @@ export default async function BrandPage({ params }: Props) {
             <div className="text-2xl font-bold text-green-700">{halalCount}</div>
             <div className="text-xs text-slate-500 mt-1">Halal</div>
           </div>
+        </section>
+      )}
+
+      {/* Catalog signal — first-party brand fingerprint */}
+      {fingerprint.productCount >= 5 && (
+        <section className="mb-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-5">
+          <h2 className="text-base font-semibold uppercase tracking-wide text-slate-600 mb-3">
+            {brand} — catalog fingerprint
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Ingredient transparency</p>
+              <p className="text-sm font-semibold text-slate-900">
+                Tier {fingerprint.transparencyTier} · {formatPercent(fingerprint.ingredientsCoverage * 100, 0)} coverage
+              </p>
+              <p className="text-xs text-slate-600 mt-0.5">{fingerprint.transparencyLabel}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">NOVA distribution</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">
+                {fingerprint.novaDistribution.rated[1]}/
+                {fingerprint.novaDistribution.rated[2]}/
+                {fingerprint.novaDistribution.rated[3]}/
+                {fingerprint.novaDistribution.rated[4]}
+              </p>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Groups 1-4 across {fingerprint.productCount.toLocaleString()} products · {fingerprint.novaDistribution.unrated.toLocaleString()} unrated
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Top flagged allergens</p>
+              {fingerprint.topAllergens.filter((a) => a.pct > 0).length === 0 ? (
+                <p className="text-sm text-slate-600">No allergens flagged in this catalog</p>
+              ) : (
+                <ul className="text-sm text-slate-900 space-y-0.5">
+                  {fingerprint.topAllergens
+                    .filter((a) => a.pct > 0)
+                    .slice(0, 3)
+                    .map((a) => (
+                      <li key={a.name} className="flex justify-between gap-3">
+                        <span className="capitalize">{a.name}</span>
+                        <span className="font-semibold tabular-nums">{formatPercent(a.pct)}</span>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mt-4 border-t border-slate-200 pt-3">
+            Tiers: 1 = full label coverage, 2 = most products labeled, 3 = mixed, 4 = sparse.
+            Reflects this catalog only — direct verification on packaging recommended.
+          </p>
         </section>
       )}
 

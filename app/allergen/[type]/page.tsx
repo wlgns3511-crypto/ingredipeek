@@ -15,6 +15,7 @@ import { AllergenBadge } from "@/components/AllergenBadge";
 import { AdSlot } from "@/components/AdSlot";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { allergenPageJsonLd } from "@/lib/schema";
+import { getDietAllergenProfile, formatPercent } from "@/lib/product-facts";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -121,6 +122,7 @@ export default async function AllergenPage({ params }: Props) {
 
   const products = config.getFn(60, 0);
   const total = countProductsByType(type);
+  const dietProfile = getDietAllergenProfile(type);
 
   const pageSchema = allergenPageJsonLd(config.title, total, config.metaDesc);
 
@@ -162,6 +164,37 @@ export default async function AllergenPage({ params }: Props) {
       </section>
 
       <AdSlot id="3741591457" />
+
+      {/* Catalog signal — first-party allergen distribution within this diet subset */}
+      {dietProfile && dietProfile.productCount >= 25 && (
+        <section className="mb-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-5">
+          <h2 className="text-base font-semibold uppercase tracking-wide text-slate-600 mb-3">
+            Hidden allergen profile within this category
+          </h2>
+          <p className="text-sm text-slate-700 mb-4 leading-relaxed">
+            Across {dietProfile.productCount.toLocaleString()} {config.title.toLowerCase()} on this catalog, here is how often
+            each of the major flagged allergens still appears in ingredient lists. A product can be {config.title.replace(" Foods", "").toLowerCase()}
+            and still carry one of the others — multi-allergen filtering matters.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            {dietProfile.perAllergen.slice(0, 8).map((row) => (
+              <div key={row.name} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                <p className="text-xs text-slate-500 capitalize">{row.name}</p>
+                <p className="text-lg font-semibold tabular-nums text-slate-900">{formatPercent(row.pct)}</p>
+                <p className="text-xs text-slate-400">{row.count.toLocaleString()} products</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-4 border-t border-slate-200 pt-3">
+            NOVA distribution within this subset: {dietProfile.novaDistribution.rated[1]}/
+            {dietProfile.novaDistribution.rated[2]}/
+            {dietProfile.novaDistribution.rated[3]}/
+            {dietProfile.novaDistribution.rated[4]} (groups 1-4) ·
+            {" "}{dietProfile.novaDistribution.unrated.toLocaleString()} unrated ·
+            ingredient-list coverage {formatPercent(dietProfile.ingredientsCoverage * 100, 0)}
+          </p>
+        </section>
+      )}
 
       {/* Other diet categories */}
       <section className="mb-8">
