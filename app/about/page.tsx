@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { TrustMetaStrip } from "@/components/TrustMetaStrip";
 
 export const metadata: Metadata = {
   title: "About IngrediPeek - Food Allergen & Ingredient Checker",
@@ -16,6 +17,8 @@ export default function AboutPage() {
 
       <div className="max-w-3xl">
         <h1 className="text-3xl font-bold mb-6">About IngrediPeek</h1>
+
+        <TrustMetaStrip />
 
         <section className="mb-8">
           <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-6">

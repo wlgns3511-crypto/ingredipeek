@@ -2,6 +2,7 @@ import { getRecentProducts, getAllBrands } from "@/lib/db";
 import { AdSlot } from "@/components/AdSlot";
 import { AllergenChecker } from "@/components/AllergenChecker";
 import { PopularEntities } from "@/components/upgrades/PopularEntities";
+import { TrustMetaStrip } from "@/components/TrustMetaStrip";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { alternates: { canonical: "/" },
@@ -93,6 +94,8 @@ export default function Home() {
           </button>
         </form>
       </section>
+
+      <TrustMetaStrip />
 
       <PopularEntities
         heading="Popular Products"

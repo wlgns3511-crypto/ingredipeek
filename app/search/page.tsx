@@ -3,6 +3,7 @@ import { searchProducts } from "@/lib/db";
 import { AllergenBadge } from "@/components/AllergenBadge";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { AdSlot } from "@/components/AdSlot";
+import { TrustMetaStrip } from "@/components/TrustMetaStrip";
 
 interface Props {
   searchParams: Promise<{ q?: string }>;
@@ -61,6 +62,8 @@ export default async function SearchPage({ searchParams }: Props) {
           </button>
         </form>
       </section>
+
+      {!query && <TrustMetaStrip />}
 
       {query && (
         <section>

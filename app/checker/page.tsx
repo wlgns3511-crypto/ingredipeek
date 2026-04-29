@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AllergenChecker } from "@/components/AllergenChecker";
+import { TrustMetaStrip } from "@/components/TrustMetaStrip";
 
 export const metadata: Metadata = {
   title: "Allergen Checker - Scan Ingredients for Big 9 Allergens",
@@ -22,6 +23,8 @@ export default function CheckerPage() {
       </section>
 
       <AllergenChecker />
+
+      <TrustMetaStrip className="mt-8" />
 
       <section className="mt-10 bg-emerald-50 border border-emerald-100 rounded-xl p-6">
         <h2 className="text-lg font-bold text-emerald-900 mb-3">

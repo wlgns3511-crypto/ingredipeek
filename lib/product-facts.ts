@@ -319,6 +319,49 @@ export function getDietAllergenProfile(type: string): DietAllergenProfile | null
   };
 }
 
+// ── Trust meta (catalog-wide signal for hub/policy pages) ─────────
+
+import brandKeep from '@/lib/generated/brand-keep.json';
+import compareKeep from '@/lib/generated/compare-keep.json';
+import productKeep from '@/lib/generated/product-keep.json';
+
+export interface TrustMeta {
+  productCount: number;
+  brandCount: number;
+  stateCount: number;
+  compareCount: number;
+  productPagesIndexed: number;
+  ingredientCoverage: number;   // 0..1
+  novaRatedShare: number;       // 0..1, excluding the 3.43 placeholder
+  buildMonth: string;           // "Apr 2026"
+}
+
+export function getTrustMeta(): TrustMeta {
+  const db = getDb();
+  const row = db.prepare(`
+    SELECT
+      COUNT(*) AS total,
+      SUM(CASE WHEN ingredients_text IS NOT NULL AND ingredients_text != '' THEN 1 ELSE 0 END) AS with_ingr,
+      SUM(CASE WHEN nova_group IS NOT NULL AND ABS(nova_group - 3.43) >= 0.01 THEN 1 ELSE 0 END) AS nova_rated
+    FROM products
+    WHERE slug IS NOT NULL
+  `).get() as { total: number; with_ingr: number; nova_rated: number };
+
+  const now = new Date();
+  const buildMonth = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+  return {
+    productCount: row.total,
+    brandCount: (brandKeep as unknown[]).length,
+    stateCount: 51, // 50 U.S. states + DC
+    compareCount: (compareKeep as unknown[]).length,
+    productPagesIndexed: (productKeep as unknown[]).length,
+    ingredientCoverage: row.total > 0 ? row.with_ingr / row.total : 0,
+    novaRatedShare: row.total > 0 ? row.nova_rated / row.total : 0,
+    buildMonth,
+  };
+}
+
 // ── Format helpers ────────────────────────────────────────────────
 
 export function formatNutrient(value: number | null, unit = 'g', digits = 1): string {
