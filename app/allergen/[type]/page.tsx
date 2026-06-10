@@ -14,8 +14,13 @@ import type { Product } from "@/lib/db";
 import { AllergenBadge } from "@/components/AllergenBadge";
 import { AdSlot } from "@/components/AdSlot";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { AuthorBox } from "@/components/AuthorBox";
 import { allergenPageJsonLd } from "@/lib/schema";
 import { getDietAllergenProfile, formatPercent } from "@/lib/product-facts";
+import { ALLERGEN_VINTAGE, REVIEWER_DISCLAIMER } from "@/lib/authorship";
+import { classifyProcessingScore } from "@/lib/processing-score";
+import { decodeAllergenSafetyMatrix } from "@/lib/allergen-safety-matrix";
+import { classifyNutrientDensity } from "@/lib/nutrient-density-band";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -126,6 +131,19 @@ export default async function AllergenPage({ params }: Props) {
 
   const pageSchema = allergenPageJsonLd(config.title, total, config.metaDesc);
 
+  // PSU 5/11: ProcessingScore + AllergenSafetyMatrix interpretation strip
+  const subsetMatrices = products.map((p) => decodeAllergenSafetyMatrix(p));
+  const palWithinSubset = subsetMatrices.filter((m) => m.crossContaminationFlags.length > 0).length;
+  const subsetScores = products.map((p) => classifyProcessingScore(p));
+  const subsetTierCounts = { Whole: 0, Minimal: 0, Processed: 0, UltraProcessed: 0, OpaqueAdditive: 0 };
+  for (const s of subsetScores) if (s.tier) subsetTierCounts[s.tier]++;
+  const subsetDensities = products.map((p) => classifyNutrientDensity(p));
+  const subsetDensityCounts = { NutrientRich: 0, NutrientDense: 0, Acceptable: 0, NutrientSparse: 0, LimitingDense: 0, DataIncomplete: 0 };
+  for (const d of subsetDensities) if (d.tier) subsetDensityCounts[d.tier]++;
+  const subsetRichOrDense = subsetDensityCounts.NutrientRich + subsetDensityCounts.NutrientDense;
+  const subsetSparseOrLimiting = subsetDensityCounts.NutrientSparse + subsetDensityCounts.LimitingDense;
+  const dietShortLabel = config.title.replace(" Foods", "").toLowerCase();
+
   return (
     <>
       <script
@@ -140,6 +158,12 @@ export default async function AllergenPage({ params }: Props) {
           { label: config.title },
         ]}
       />
+
+      <div className="border-l-4 border-amber-400 bg-amber-50 p-4 mb-6 rounded-r">
+        <p className="text-sm text-amber-900">
+          <strong>Safety note.</strong> {REVIEWER_DISCLAIMER}
+        </p>
+      </div>
 
       <section className="mb-8">
         <div className="flex items-center gap-3 mb-3">
@@ -192,6 +216,55 @@ export default async function AllergenPage({ params }: Props) {
             {dietProfile.novaDistribution.rated[4]} (groups 1-4) ·
             {" "}{dietProfile.novaDistribution.unrated.toLocaleString()} unrated ·
             ingredient-list coverage {formatPercent(dietProfile.ingredientsCoverage * 100, 0)}
+          </p>
+        </section>
+      )}
+
+      {/* PSU 5/11: AllergenSafetyMatrix + ProcessingScore interpretation strip */}
+      {products.length >= 3 && (
+        <section
+          className="mb-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-5"
+          data-upgrade="allergen-interpretation-strip"
+        >
+          <h2 className="text-base font-semibold uppercase tracking-wide text-slate-600 mb-3">
+            How to read this {dietShortLabel} list
+          </h2>
+          <p className="text-sm text-slate-700 leading-relaxed mb-3" data-upgrade="allergen-safety-matrix">
+            Of the {products.length} products shown on this page,{" "}
+            <strong>{palWithinSubset}</strong> carry voluntary PAL (&quot;may contain&quot;) cross-contamination
+            warnings parsed from the OpenFoodFacts allergen text. PAL labelling is voluntary under FDA FALCPA 2004
+            — absence of a PAL flag does not guarantee absence of cross-contamination in shared facilities. Sesame
+            (added to the FDA Top 9 by the FASTER Act 2021, effective January 2023) and the EU-only allergens
+            (celery, mustard, lupin, molluscs, sulphites under EU Regulation 1169/2011) are not yet tracked as
+            separate columns in our catalog; consult the on-pack label if you have a diagnosed allergy.
+          </p>
+          <p className="text-sm text-slate-700 leading-relaxed mb-3" data-upgrade="processing-score">
+            On the ProcessingScore lever, this {dietShortLabel} subset distributes as {subsetTierCounts.Whole}{" "}
+            Whole / {subsetTierCounts.Minimal} Minimal / {subsetTierCounts.Processed} Processed /{" "}
+            {subsetTierCounts.UltraProcessed} UltraProcessed.
+            {subsetTierCounts.UltraProcessed > 0 ? (
+              <>
+                {" "}A &quot;{dietShortLabel}&quot; label does not automatically mean &quot;minimally
+                processed&quot; — many specialty-diet products meet our NOVA 4 + five-or-more-additives
+                UltraProcessed criteria.
+              </>
+            ) : null}
+            {subsetTierCounts.OpaqueAdditive > 0 ? (
+              <>
+                {" "}{subsetTierCounts.OpaqueAdditive} products on this page lack a usable ingredient list (under
+                20 characters) and are filed OpaqueAdditive rather than guessed at.
+              </>
+            ) : null}
+          </p>
+          <p className="text-sm text-slate-700 leading-relaxed" data-upgrade="nutrient-density-band">
+            On the NutrientDensityBand, this {dietShortLabel} subset distributes as{" "}
+            {subsetDensityCounts.NutrientRich} Nutrient-rich / {subsetDensityCounts.NutrientDense} Nutrient-dense /{" "}
+            {subsetDensityCounts.Acceptable} Acceptable / {subsetDensityCounts.NutrientSparse} Nutrient-sparse /{" "}
+            {subsetDensityCounts.LimitingDense} Limiting-dense — the band is read against FDA Daily Value reference
+            amounts codified at 21 CFR 101.9(c). <strong>{subsetRichOrDense}</strong> rows sit on the beneficial
+            side of the FDA &quot;5/20&quot; rule and <strong>{subsetSparseOrLimiting}</strong> on the limiting
+            side. A &quot;{dietShortLabel}&quot; certification does not predict the nutrient density band — the
+            two levers test different surfaces of the same per-100 g panel.
           </p>
         </section>
       )}
@@ -291,6 +364,8 @@ export default async function AllergenPage({ params }: Props) {
       </section>
 
       <AdSlot id="9876543210" />
+
+      <AuthorBox vintage={ALLERGEN_VINTAGE} source="FDA + EFSA Allergen Lists" />
     </>
   );
 }

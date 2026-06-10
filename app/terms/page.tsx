@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { LEGAL_REVIEWED } from "@/lib/authorship";
 
 export const metadata: Metadata = {
   title: "Terms of Service - IngrediPeek",
@@ -15,7 +16,9 @@ export default function TermsPage() {
 
       <div className="max-w-3xl">
         <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
-        <p className="text-slate-500 text-sm mb-8">Last updated: March 2026</p>
+        <p className="text-slate-500 text-sm mb-8">
+          Last reviewed: <time dateTime={LEGAL_REVIEWED}>{LEGAL_REVIEWED}</time>
+        </p>
 
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8">
           <p className="text-red-800 font-medium text-sm">

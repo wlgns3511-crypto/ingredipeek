@@ -41,6 +41,37 @@ import * as path from 'path';
 const DB_PATH = path.join(process.cwd(), 'data', 'foods.db');
 const OUT_DIR = path.join(process.cwd(), 'lib', 'generated');
 
+// HCU 2026-05-04 — Bing impressions auto-union (separate index from Google).
+const BING_JSON_DIR = path.resolve(process.cwd(), '..', '_shared', 'data', 'bing_analyze');
+const BING_DOMAIN = 'ingredipeek.com';
+const BING_MIN_IMP = 1;
+
+function loadBingSlugs(routeRe: RegExp): string[] {
+  if (!fs.existsSync(BING_JSON_DIR)) return [];
+  const files = fs.readdirSync(BING_JSON_DIR)
+    .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    .sort();
+  if (!files.length) return [];
+  try {
+    const json = JSON.parse(fs.readFileSync(path.join(BING_JSON_DIR, files[files.length - 1]), 'utf8'));
+    const site = json[BING_DOMAIN];
+    if (!site || !Array.isArray(site.pages)) return [];
+    const out = new Map<string, number>();
+    for (const pg of site.pages) {
+      const url = String(pg.url || '');
+      const pathOnly = url.replace(/^https?:\/\/[^/]+/, '');
+      const m = routeRe.exec(pathOnly);
+      if (!m) continue;
+      const slug = decodeURIComponent(m[1]);
+      const imp = Number(pg.impressions) || 0;
+      out.set(slug, (out.get(slug) || 0) + imp);
+    }
+    return [...out.entries()].filter(([, i]) => i >= BING_MIN_IMP).map(([s]) => s);
+  } catch {
+    return [];
+  }
+}
+
 const PRODUCT_CAP = 2000;
 const PER_BRAND_CAP = 15;
 const MIN_INGREDIENT_LEN = 50;
@@ -120,6 +151,13 @@ function main() {
   for (const slug of GSC_EVIDENCE_PRODUCTS) {
     if (!productSet.has(slug)) { productSet.add(slug); productGscAdded++; }
   }
+  // Bing impressions union — only slugs that exist in DB.
+  const bingProducts = loadBingSlugs(/^\/product\/([^/]+)\/?$/);
+  let productBingAdded = 0;
+  for (const slug of bingProducts) {
+    const exists = db.prepare(`SELECT 1 FROM products WHERE slug = ?`).get(slug);
+    if (exists && !productSet.has(slug)) { productSet.add(slug); productBingAdded++; }
+  }
   const productSlugs = Array.from(productSet).sort();
 
   // Sanity floor: if something goes wrong (empty DB, bad query, schema change)
@@ -160,6 +198,19 @@ function main() {
       if (!compareSet.has(reverse)) { compareSet.add(reverse); compareGscAdded++; }
     }
   }
+  // Bing impressions union — comparisons table existence check + reverse.
+  const bingCompares = loadBingSlugs(/^\/compare\/([^/]+)\/?$/);
+  let compareBingAdded = 0;
+  for (const slug of bingCompares) {
+    const exists = db.prepare(`SELECT 1 FROM comparisons WHERE slug = ?`).get(slug);
+    if (!exists) continue;
+    if (!compareSet.has(slug)) { compareSet.add(slug); compareBingAdded++; }
+    const m = slug.match(/^(.+)-vs-(.+)$/);
+    if (m) {
+      const reverse = `${m[2]}-vs-${m[1]}`;
+      if (!compareSet.has(reverse)) { compareSet.add(reverse); compareBingAdded++; }
+    }
+  }
   const compareSlugs = Array.from(compareSet).sort();
 
   // --- Brand keep-set (brands with >= 5 products) ---
@@ -175,15 +226,35 @@ function main() {
        GROUP BY brand HAVING n >= 5
        ORDER BY n DESC`,
   ).all() as BrandRow[];
+  const slugify = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const brandKeep: { brand: string; slug: string; productCount: number }[] = brandRows.map((r) => ({
     brand: r.brand,
-    slug: r.brand
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60),
+    slug: slugify(r.brand),
     productCount: r.n,
   }));
+
+  // Bing impressions union — re-include any brand Bing is impressing even if
+  // it falls under the ≥5-product cap. Match by computed slug across full
+  // brand list (no HAVING filter).
+  const bingBrandSlugs = new Set(loadBingSlugs(/^\/brand\/([^/]+)\/?$/));
+  let brandBingAdded = 0;
+  if (bingBrandSlugs.size > 0) {
+    const allBrandsRows = db.prepare(
+      `SELECT brand, COUNT(*) AS n FROM products
+         WHERE brand IS NOT NULL AND brand != ''
+         GROUP BY brand`,
+    ).all() as BrandRow[];
+    const existingSlugs = new Set(brandKeep.map((b) => b.slug));
+    for (const r of allBrandsRows) {
+      const slug = slugify(r.brand);
+      if (bingBrandSlugs.has(slug) && !existingSlugs.has(slug)) {
+        brandKeep.push({ brand: r.brand, slug, productCount: r.n });
+        existingSlugs.add(slug);
+        brandBingAdded++;
+      }
+    }
+  }
 
   // --- Write outputs ---
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -196,11 +267,11 @@ function main() {
 
   const brandOut = path.join(OUT_DIR, 'brand-keep.json');
   fs.writeFileSync(brandOut, JSON.stringify(brandKeep, null, 0) + '\n');
-  console.log(`[keep-sets] brand-keep.json: ${brandKeep.length} brands (>= 5 products each)`);
 
   // --- Audit log ---
-  console.log(`[keep-sets] product-keep.json: ${productSlugs.length} slugs (${baseProductSlugs.length} algorithmic + ${productGscAdded} GSC-evidence)`);
-  console.log(`[keep-sets] compare-keep.json: ${compareSlugs.length} slugs (${compareRows.length} forward + reverses + ${compareGscAdded} GSC-evidence)`);
+  console.log(`[keep-sets] product-keep.json: ${productSlugs.length} slugs (${baseProductSlugs.length} algo + ${productGscAdded} GSC + ${productBingAdded} Bing)`);
+  console.log(`[keep-sets] compare-keep.json: ${compareSlugs.length} slugs (${compareRows.length} forward + reverses + ${compareGscAdded} GSC + ${compareBingAdded} Bing)`);
+  console.log(`[keep-sets] brand-keep.json: ${brandKeep.length} brands (≥5 products + ${brandBingAdded} Bing)`);
   console.log(`[keep-sets] brand coverage: ${brandHist.size} brands`);
 
   // Top 10 brands in keep-set

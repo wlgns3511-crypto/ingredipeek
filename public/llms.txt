@@ -1,0 +1,28 @@
+# IngrediPeek
+
+> Food Allergen & Ingredient Checker
+
+Check food allergens, ingredients, and dietary compatibility for thousands of products. Find gluten-free, vegan, halal, and nut-free foods instantly.
+
+## Core pages
+- [Methodology and data sources](https://ingredipeek.com/methodology/): how every figure is derived, with primary-source citations
+- [Compare](https://ingredipeek.com/compare/): side-by-side comparison
+- [About and editorial standards](https://ingredipeek.com/about/): authorship and review policy
+
+## Key product
+- [Gluten Free](https://ingredipeek.com/allergen/gluten-free/)
+- [Vegan](https://ingredipeek.com/allergen/vegan/)
+- [Halal](https://ingredipeek.com/allergen/halal/)
+- [Nut Free](https://ingredipeek.com/allergen/nut-free/)
+- [Dairy Free](https://ingredipeek.com/allergen/dairy-free/)
+- [Organic](https://ingredipeek.com/allergen/organic/)
+- [Vegetarian](https://ingredipeek.com/allergen/vegetarian/)
+- [Kroger](https://ingredipeek.com/brand/kroger/)
+- [Roundy S](https://ingredipeek.com/brand/roundy-s/)
+- [Spartan](https://ingredipeek.com/brand/spartan/)
+- [Big Y](https://ingredipeek.com/brand/big-y/)
+- [Western Family](https://ingredipeek.com/brand/western-family/)
+
+## Data
+- Primary sources: FDA Food Additive Status List, FDA GRAS Notice Inventory, EFSA Food Additives Database, USDA FoodData Central
+- All figures are derived from these primary sources; see /methodology/ for derivation and vintage.

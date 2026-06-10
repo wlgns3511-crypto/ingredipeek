@@ -1,8 +1,11 @@
-import { getRecentProducts, getAllBrands } from "@/lib/db";
+import { getRecentProducts, getAllBrands, countAllProducts, countAllergenFreeProducts } from "@/lib/db";
 import { AdSlot } from "@/components/AdSlot";
 import { AllergenChecker } from "@/components/AllergenChecker";
 import { PopularEntities } from "@/components/upgrades/PopularEntities";
+import { TrustBlock } from "@/components/upgrades/TrustBlock";
 import { TrustMetaStrip } from "@/components/TrustMetaStrip";
+import { AuthorBox } from "@/components/AuthorBox";
+import { TRUST_BLOCK_SOURCES, ENTITY_VINTAGE } from "@/lib/authorship";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { alternates: { canonical: "/" },
@@ -64,22 +67,35 @@ const CATEGORIES = [
 export default function Home() {
   const recent = getRecentProducts(12);
   const topBrands = getAllBrands(20);
+  const totalProducts = countAllProducts();
+  const totalBrands = getAllBrands(10000).length;
+  const allergenFree = countAllergenFreeProducts();
 
   return (
     <div>
+      {/* Data-sovereignty strip — source attribution + coverage above-the-fold (AdSense gate) */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest text-slate-500">
+        <span>Source · FDA · USDA FoodData · EFSA · WHO/FAO Codex</span>
+        <span className="text-slate-300">|</span>
+        <span>Coverage · {totalProducts.toLocaleString()} products · {totalBrands.toLocaleString()} brands</span>
+        <span className="text-slate-300">|</span>
+        <a href="/methodology/" className="hover:text-green-700 underline-offset-2 hover:underline">Methodology</a>
+      </div>
+
       {/* Hero / Search */}
-      <section className="mb-12 text-center">
-        <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-1.5 text-sm text-green-700 font-medium mb-4">
-          <span>🌿</span> Trusted Allergen Reference
+      <section className="mb-6 text-center">
+        <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-1.5 text-sm text-green-700 font-medium mb-3">
+          <span>🌿</span> Trusted Allergen Reference · Open Food Facts · cross-checked vs FDA / USDA
         </div>
-        <h1 className="text-4xl font-bold mb-4 text-slate-900">
+        <h1 className="text-3xl md:text-4xl font-bold mb-3 text-slate-900">
           Food Allergen &amp; Ingredient Checker
         </h1>
-        <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-8">
-          Instantly check if any food product is gluten-free, vegan, halal, nut-free, or dairy-free.
-          Verified allergen data for thousands of products.
+        <p className="text-base md:text-lg text-slate-600 max-w-2xl mx-auto mb-6">
+          Instantly check if any food product is gluten-free, vegan, halal, nut-free, or dairy-free across{" "}
+          <strong className="tabular-nums">{totalProducts.toLocaleString()}</strong> products from{" "}
+          <strong className="tabular-nums">{totalBrands.toLocaleString()}</strong> brands.
         </p>
-        <form action="/search" method="GET" className="max-w-xl mx-auto flex gap-2">
+        <form action="/search" method="GET" className="max-w-xl mx-auto flex gap-2 mb-6">
           <input
             type="search"
             name="q"
@@ -93,9 +109,36 @@ export default function Home() {
             Search
           </button>
         </form>
+
+        {/* Stats grid — surfaces 4 catalog dimensions above-the-fold */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
+          <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-green-700 tabular-nums">{totalProducts.toLocaleString()}</div>
+            <div className="text-xs text-slate-600 mt-0.5">Products tracked</div>
+          </div>
+          <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-green-700 tabular-nums">{totalBrands.toLocaleString()}</div>
+            <div className="text-xs text-slate-600 mt-0.5">Brands indexed</div>
+          </div>
+          <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-green-700 tabular-nums">8</div>
+            <div className="text-xs text-slate-600 mt-0.5">FDA Top-8 allergens</div>
+          </div>
+          <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-green-700 tabular-nums">{allergenFree.toLocaleString()}</div>
+            <div className="text-xs text-slate-600 mt-0.5">Allergen-free verified</div>
+          </div>
+        </div>
       </section>
 
       <TrustMetaStrip />
+
+      {/* Trust strip — consolidated source provenance + last refresh (AdSense E-E-A-T) */}
+      <TrustBlock
+        sources={[...TRUST_BLOCK_SOURCES]}
+        updated={ENTITY_VINTAGE}
+        label="Data provenance"
+      />
 
       <PopularEntities
         heading="Popular Products"
@@ -239,6 +282,8 @@ export default function Home() {
       </section>
 
       <AdSlot id="9876543210" />
+
+      <AuthorBox vintage={ENTITY_VINTAGE} />
     </div>
   );
 }

@@ -11,9 +11,18 @@ import {
   formatCategoryLabel,
   formatNutrient,
 } from "@/lib/product-facts";
+import { classifyProcessingScore } from "@/lib/processing-score";
+import { decodeAllergenSafetyMatrix } from "@/lib/allergen-safety-matrix";
+import { classifyNutrientDensity } from "@/lib/nutrient-density-band";
+import { interpretProduct } from "@/lib/ingredient-interpretation";
 import { buildProductCommentary } from "@/lib/product-commentary";
 import { generateAnalysis, generateFAQ, ALLERGEN_LIST, DIET_LIST } from "@/lib/analysis";
 import { productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
+import { ENTITY_VINTAGE } from "@/lib/authorship";
+import {
+  PROCESSING_SCORE_CROSSWALK_SOURCES,
+  processingTierShortLabel,
+} from "@/lib/crosswalk-processing-score";
 import { generateAutoFaqs } from "@/lib/auto-faqs";
 import { AllergenBadge } from "@/components/AllergenBadge";
 import { NutriScore, NovaGroup } from "@/components/NutriScore";
@@ -28,6 +37,7 @@ import { EditorNote } from "@/components/EditorNote";
 import { DidYouKnow } from "@/components/DidYouKnow";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { CrossSiteLinks } from "@/components/CrossSiteLinks";
+import { IngredipeekCrossWalkBridge } from "@/components/IngredipeekCrossWalkBridge";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { AllergenSafetyCheck } from "@/components/tools/AllergenSafetyCheck";
 import { InsightCards } from "@/components/InsightCards";
@@ -69,7 +79,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = getProductBySlug(slug);
   if (!product) return { title: "Product Not Found" };
 
-  // Derive direct yes/no answers from allergen columns (1=contains, 0=free of, null=unknown)
+  // Phase 7 P1 — verdict-in-title via composeProductTitle (ProcessingScore +
+  // NOVA + additive count). v2.2 §4.0 Pre-flight Title-Cap Math: layout
+  // suffix ' | IngrediPeek' = 14c ≥ 13c threshold → use `title.absolute` to
+  // bypass the layout title.template, keeping the full title ≤60c (Google
+  // SERP rewrite budget, NOT 70c). Audit script verifies 0/2192 over 60.
+  // SERP title built below (after allergen data) to lead with the gluten/allergen answer.
+
+  const brandSuffix = product.brand ? ` by ${product.brand}` : '';
   const gfVal = product.is_gluten_free;
   const veganVal = product.is_vegan;
   const nutsVal = product.allergen_nuts === 1 || product.allergen_peanuts === 1
@@ -78,18 +95,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const gfAns = gfVal === 1 ? 'Yes' : gfVal === 0 ? 'No' : 'Unclear';
   const veganAns = veganVal === 1 ? 'Yes' : veganVal === 0 ? 'No' : 'Unclear';
   const nutsAns = nutsVal === 1 ? 'contains nuts' : nutsVal === 0 ? 'nut-free' : 'nut status unclear';
-  const brandSuffix = product.brand ? ` by ${product.brand}` : '';
-
-  // Lead with the strongest signal — prefer gluten-free if known, else vegan, else generic
-  let title: string;
-  if (gfVal != null) {
-    title = `Is ${product.name} gluten-free? ${gfAns} · Allergen Check`;
-  } else if (veganVal != null) {
-    title = `Is ${product.name} vegan? ${veganAns} · Allergen Check`;
-  } else {
-    title = `Is ${product.name} safe for allergies? Ingredient Check`;
-  }
-
+  // Bing CTR fix 2026-06-01: dominant query "is [product] gluten free" got ~0% CTR because
+  // the old processing-verdict title (High · NOVA · addv) had no "gluten". Lead the SERP title
+  // with the gluten/allergen answer (searched intent); processing verdict stays on-page.
+  // Still a verdict-in-title (Trap #117). title.absolute bypasses the suffix, ≤60c.
+  const allergenTag = nutsVal === 0 ? ' · Nut-Free' : nutsVal === 1 ? ' · Contains Nuts' : '';
+  const gfCore = `: Gluten-Free? ${gfAns}`;
+  const gfFull = `${product.name}${gfCore}${allergenTag}`;
+  const title = gfFull.length <= 60
+    ? gfFull
+    : product.name.length + gfCore.length <= 60
+      ? `${product.name}${gfCore}`
+      : `${product.name.slice(0, Math.max(10, 60 - gfCore.length) - 1)}…${gfCore}`;
   const nutriPart = product.nutriscore ? `Nutri-Score ${product.nutriscore.toUpperCase()}` : null;
   const caloriePart = product.calories != null ? `${Math.round(product.calories)} kcal/100g` : null;
   const statParts = [
@@ -99,10 +116,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     nutriPart,
     caloriePart,
   ].filter(Boolean).slice(0, 3).join(', ');
-  const description = `${product.name}${brandSuffix}: ${statParts}. Full allergen panel (8 FDA-tracked), diet compatibility, and ingredient list from Open Food Facts.`;
+  const description = `${product.name}${brandSuffix}: ${statParts}. ProcessingScore + 8-allergen panel + 50-additive watchlist composed from FDA / EFSA / USDA / Codex Alimentarius cross-walk.`;
 
   return {
-    title,
+    // title.absolute bypasses layout title.template (' | IngrediPeek' 14c
+    // suffix) — keeps body ≤60c per v2.2 §4.0. openGraph keeps the bare
+    // composed title (no layout suffix in OG anyway).
+    title: { absolute: title },
     description,
     alternates: { canonical: `${SITE_URL}/product/${slug}/` },
     openGraph: {
@@ -128,6 +148,10 @@ export default async function ProductPage({ params }: Props) {
   const related = getRelatedProducts(product.categories, slug, 6);
   const additiveProfile = getAdditiveProfile(product.ingredients_text);
   const novaInfo = getNovaInfo(product.nova_group);
+  const processingScore = classifyProcessingScore(product);
+  const allergenMatrix = decodeAllergenSafetyMatrix(product);
+  const nutrientDensity = classifyNutrientDensity(product);
+  const productInterpretation = interpretProduct(product);
   const primaryCat = getPrimaryCategory(product.categories);
   const catFingerprint = primaryCat ? getCategoryFingerprint(primaryCat) : null;
   const commentary = buildProductCommentary(product, additiveProfile, novaInfo, catFingerprint);
@@ -153,6 +177,84 @@ export default async function ProductPage({ params }: Props) {
   ]);
   const faqSchema = faqJsonLd(faqItems);
 
+  // Phase 7 P4 — consolidated cross-walk Dataset JSON-LD. Lifts the
+  // ProcessingScore × additive × allergen × density verdict tuple into a
+  // single Dataset block with 4-distinct-publisher creator array (FDA /
+  // EFSA / USDA / Codex Alimentarius) and variableMeasured PropertyValues
+  // that include the composed verdict tokens (ProcessingTier / NovaGroup /
+  // AdditiveCount / AllergenRiskTier / NutrientDensityTier / DominantSignal),
+  // not just raw nutrient numbers. See lib/crosswalk-processing-score.ts.
+  const crosswalkDataset = {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: `Processing × Additive × Allergen Cross-Walk — ${product.name}`,
+    description: `Composed verdict for ${product.name}${product.brand ? ` by ${product.brand}` : ''}: 5-tier ProcessingScore (${processingScore.tierLabel}) from NOVA group ${product.nova_group ?? '–'} × ${additiveProfile.matched.length} FDA-watchlist additives × ${allergenMatrix.riskTier} allergen risk × ${nutrientDensity.tierLabel} nutrient density. DominantSignal: ${productInterpretation.dominantSignal}.`,
+    url: `${SITE_URL}/product/${slug}/`,
+    license: 'https://creativecommons.org/publicdomain/zero/1.0/',
+    datePublished: ENTITY_VINTAGE,
+    dateModified: ENTITY_VINTAGE,
+    creator: PROCESSING_SCORE_CROSSWALK_SOURCES.map((s) => ({
+      '@type': 'Organization',
+      name: s.name,
+      url: s.url,
+    })),
+    isBasedOn: PROCESSING_SCORE_CROSSWALK_SOURCES.map((s) => s.url),
+    variableMeasured: [
+      {
+        '@type': 'PropertyValue',
+        name: 'ProcessingTier',
+        value: processingScore.tierLabel,
+        description: `5-tier ProcessingScore short label: ${processingTierShortLabel(processingScore.tier)}`,
+      },
+      {
+        '@type': 'PropertyValue',
+        name: 'NovaGroup',
+        value: product.nova_group ?? 'unrated',
+        description: 'OpenFoodFacts / Monteiro et al. 2019 NOVA classification (1=unprocessed, 4=ultra-processed)',
+      },
+      {
+        '@type': 'PropertyValue',
+        name: 'AdditiveCount',
+        value: additiveProfile.matched.length,
+        description: `Total matches from the 50-additive first-party watchlist (tier 1: ${additiveProfile.byTier[1]}, tier 2: ${additiveProfile.byTier[2]}, tier 3: ${additiveProfile.byTier[3]})`,
+      },
+      {
+        '@type': 'PropertyValue',
+        name: 'AllergenRiskTier',
+        value: allergenMatrix.riskTier,
+        description: 'AllergenSafetyMatrix decoder — FALCPA / FASTER Act 8-allergen panel composed with EFSA Annex II + Codex STAN 1-1985',
+      },
+      {
+        '@type': 'PropertyValue',
+        name: 'NutrientDensityTier',
+        value: nutrientDensity.tierLabel,
+        description: 'USDA FoodData Central macronutrient composition vs first-party density bands',
+      },
+      {
+        '@type': 'PropertyValue',
+        name: 'DominantSignal',
+        value: productInterpretation.dominantSignal,
+        description: '6-bucket composite from interpretProduct() — processing × allergen × density → reading-order routing',
+      },
+      ...(product.calories != null
+        ? [{
+            '@type': 'PropertyValue',
+            name: 'CaloriesPer100g',
+            value: product.calories,
+            unitText: 'kcal',
+          }]
+        : []),
+      ...(product.nutriscore
+        ? [{
+            '@type': 'PropertyValue',
+            name: 'NutriScore',
+            value: product.nutriscore.toUpperCase(),
+            description: 'Santé Publique France Nutri-Score (A-E)',
+          }]
+        : []),
+    ],
+  };
+
   return (
     <>
       <script
@@ -166,6 +268,10 @@ export default async function ProductPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crosswalkDataset) }}
       />
 
       <Breadcrumb
@@ -234,6 +340,62 @@ export default async function ProductPage({ params }: Props) {
         ]}
         updated="Open Food Facts community database"
       />
+
+      <section
+        className="mb-6 bg-slate-50 border border-slate-200 rounded-lg p-5"
+        data-upgrade="interpretation-strip"
+      >
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">How to read this product</h2>
+
+        <div className="grid md:grid-cols-3 gap-2 mb-4" data-upgrade="three-pill">
+          <div className="bg-white border border-slate-200 rounded px-3 py-2">
+            <div className="text-xs text-slate-500 uppercase tracking-wide">Processing</div>
+            <div className="text-sm font-semibold text-slate-900">{processingScore.tierLabel}</div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded px-3 py-2">
+            <div className="text-xs text-slate-500 uppercase tracking-wide">Allergen safety</div>
+            <div className="text-sm font-semibold text-slate-900">{allergenMatrix.riskTier}</div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded px-3 py-2">
+            <div className="text-xs text-slate-500 uppercase tracking-wide">Nutrient density</div>
+            <div className="text-sm font-semibold text-slate-900">{nutrientDensity.tierLabel}</div>
+          </div>
+        </div>
+
+        <div
+          className={
+            productInterpretation.dominantSignal === 'whole-and-safe'
+              ? 'bg-emerald-50 border border-emerald-200 rounded p-4 mb-4'
+              : productInterpretation.dominantSignal === 'ultra-but-empty'
+              ? 'bg-amber-50 border border-amber-200 rounded p-4 mb-4'
+              : productInterpretation.dominantSignal === 'ultra-and-allergenic' || productInterpretation.dominantSignal === 'whole-but-allergenic'
+              ? 'bg-rose-50 border border-rose-200 rounded p-4 mb-4'
+              : productInterpretation.dominantSignal === 'data-incomplete'
+              ? 'bg-slate-100 border border-slate-300 rounded p-4 mb-4'
+              : 'bg-white border border-slate-200 rounded p-4 mb-4'
+          }
+          data-upgrade="composite-verdict"
+        >
+          <p className="text-slate-900 leading-relaxed text-sm">
+            <strong>{productInterpretation.verdict}</strong>
+          </p>
+        </div>
+
+        <div className="space-y-3 text-slate-700 text-sm leading-relaxed" data-upgrade="four-paragraph">
+          <p data-upgrade="processing-score">{productInterpretation.paragraphs.processing}</p>
+          <p data-upgrade="allergen-safety-matrix">{productInterpretation.paragraphs.allergen}</p>
+          <p data-upgrade="nutrient-density-band">{productInterpretation.paragraphs.density}</p>
+          <p data-upgrade="synthesis"><strong>Cross-reading:</strong> {productInterpretation.paragraphs.synthesis}</p>
+        </div>
+
+        <p className="mt-3 text-xs text-slate-500 border-t border-slate-200 pt-3">
+          Reader help: ProcessingScore explainer
+          {' · '}AllergenSafetyMatrix
+          {' · '}NutrientDensityBand
+          {' · '}how to read a product page
+          {' · '}processing × allergen tradeoff
+        </p>
+      </section>
 
       <TableOfContents />
 
@@ -766,7 +928,9 @@ export default async function ProductPage({ params }: Props) {
 
           <CrossSiteLinks current="IngredIPeek" />
 
-          <AuthorBox />
+          <IngredipeekCrossWalkBridge productName={product.name} brand={product.brand} />
+
+          <AuthorBox vintage={ENTITY_VINTAGE} source="FDA Food Additive Status + EFSA Database" />
         </div>
 
         {/* Sidebar */}

@@ -5,7 +5,12 @@ import brandKeep from "@/lib/generated/brand-keep.json";
 import { AllergenBadge } from "@/components/AllergenBadge";
 import { AdSlot } from "@/components/AdSlot";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { AuthorBox } from "@/components/AuthorBox";
 import { getBrandFingerprint, formatPercent } from "@/lib/product-facts";
+import { classifyProcessingScore } from "@/lib/processing-score";
+import { decodeAllergenSafetyMatrix } from "@/lib/allergen-safety-matrix";
+import { classifyNutrientDensity } from "@/lib/nutrient-density-band";
+import { ENTITY_VINTAGE } from "@/lib/authorship";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -60,6 +65,23 @@ export default async function BrandPage({ params }: Props) {
   const glutenFreeCount = products.filter((p) => p.is_gluten_free === 1).length;
   const halalCount = products.filter((p) => p.is_halal === 1).length;
   const dairyFreeCount = products.filter((p) => p.is_dairy_free === 1 || p.allergen_milk === 0).length;
+
+  // PSU 5/11: ProcessingScore + AllergenSafetyMatrix interpretation strip
+  const processingScores = products.map((p) => classifyProcessingScore(p));
+  const tierCounts = { Whole: 0, Minimal: 0, Processed: 0, UltraProcessed: 0, OpaqueAdditive: 0 };
+  for (const s of processingScores) if (s.tier) tierCounts[s.tier]++;
+  const tierEntries = Object.entries(tierCounts) as Array<[keyof typeof tierCounts, number]>;
+  const dominantTier = tierEntries
+    .filter(([k]) => k !== 'OpaqueAdditive')
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Processed';
+  const allergenMatrices = products.map((p) => decodeAllergenSafetyMatrix(p));
+  const palCount = allergenMatrices.filter((m) => m.crossContaminationFlags.length > 0).length;
+  const containsMultipleCount = allergenMatrices.filter((m) => m.riskTier === 'Contains-Multiple').length;
+  const densityResults = products.map((p) => classifyNutrientDensity(p));
+  const densityCounts = { NutrientRich: 0, NutrientDense: 0, Acceptable: 0, NutrientSparse: 0, LimitingDense: 0, DataIncomplete: 0 };
+  for (const d of densityResults) if (d.tier) densityCounts[d.tier]++;
+  const richOrDense = densityCounts.NutrientRich + densityCounts.NutrientDense;
+  const sparseOrLimiting = densityCounts.NutrientSparse + densityCounts.LimitingDense;
 
   return (
     <>
@@ -150,6 +172,62 @@ export default async function BrandPage({ params }: Props) {
           <p className="text-xs text-slate-500 mt-4 border-t border-slate-200 pt-3">
             Tiers: 1 = full label coverage, 2 = most products labeled, 3 = mixed, 4 = sparse.
             Reflects this catalog only — direct verification on packaging recommended.
+          </p>
+        </section>
+      )}
+
+      {/* PSU 5/11: ProcessingScore + AllergenSafetyMatrix interpretation */}
+      {products.length >= 3 && (
+        <section
+          className="mb-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-5"
+          data-upgrade="brand-interpretation-strip"
+        >
+          <h2 className="text-base font-semibold uppercase tracking-wide text-slate-600 mb-3">
+            How to read {brand}
+          </h2>
+          <p className="text-sm text-slate-700 leading-relaxed mb-3" data-upgrade="processing-score">
+            Across the {products.length} {brand} products we surface, the dominant ProcessingScore tier is{" "}
+            <strong>{dominantTier}</strong> — distribution {tierCounts.Whole} Whole / {tierCounts.Minimal} Minimal /{" "}
+            {tierCounts.Processed} Processed / {tierCounts.UltraProcessed} UltraProcessed. ProcessingScore composes
+            NOVA group (Monteiro et al. 2019) and additive-tier counts; an UltraProcessed-heavy distribution does
+            not imply unsafety — many tier-3 additives remain GRAS-listed under FDA 21 CFR 182 / 184.
+            {tierCounts.OpaqueAdditive > 0 ? (
+              <>
+                {" "}
+                {tierCounts.OpaqueAdditive} products are filed as OpaqueAdditive because their ingredient list is
+                missing or under 20 characters; we cannot place them on the tier honestly.
+              </>
+            ) : null}
+          </p>
+          <p className="text-sm text-slate-700 leading-relaxed mb-3" data-upgrade="allergen-safety-matrix">
+            On the AllergenSafetyMatrix, <strong>{containsMultipleCount}</strong> of {products.length} products
+            land in the Contains-Multiple tier (three or more FDA Top 9 allergens declared).{" "}
+            {palCount > 0 ? (
+              <>
+                {palCount} carry voluntary PAL (&quot;may contain&quot;) cross-contamination warnings parsed from
+                the OpenFoodFacts allergen text — these are not FDA-mandated under FALCPA 2004, and absence of a
+                PAL flag does not guarantee absence of cross-contamination.
+              </>
+            ) : (
+              <>
+                No products in this catalog page carry a parseable PAL (&quot;may contain&quot;) warning, but PAL
+                is voluntary under US FALCPA 2004 — read the on-pack label directly if you have a diagnosed
+                allergy.
+              </>
+            )}{" "}
+            Sesame and the EU-only allergens (celery, mustard, lupin, molluscs, sulphites) are not yet tracked as
+            separate columns in our catalog.
+          </p>
+          <p className="text-sm text-slate-700 leading-relaxed" data-upgrade="nutrient-density-band">
+            On the NutrientDensityBand, the {brand} catalog distributes as {densityCounts.NutrientRich} Nutrient-rich
+            / {densityCounts.NutrientDense} Nutrient-dense / {densityCounts.Acceptable} Acceptable /{" "}
+            {densityCounts.NutrientSparse} Nutrient-sparse / {densityCounts.LimitingDense} Limiting-dense per
+            FDA Daily Value cutoffs at 21 CFR 101.9(c).{" "}
+            <strong>{richOrDense}</strong> rows land on the beneficial side of the FDA &quot;5/20&quot; rule and{" "}
+            <strong>{sparseOrLimiting}</strong> on the limiting side; the remaining{" "}
+            {densityCounts.Acceptable + densityCounts.DataIncomplete} are in the middle band or lack enough nutriment
+            fields to score. Daily Value references are codified for a 2,000 kcal reference diet — read the per-100 g
+            Nutrition Facts panel on the pack for actual amounts.
           </p>
         </section>
       )}
@@ -254,6 +332,8 @@ export default async function BrandPage({ params }: Props) {
       </section>
 
       <AdSlot id="9876543210" />
+
+      <AuthorBox vintage={ENTITY_VINTAGE} source="OpenFoodFacts brand-aggregated catalog · FDA Food Additive Status · USDA FoodData Central · FDA 21 CFR 101.9(c) Daily Value" />
     </>
   );
 }

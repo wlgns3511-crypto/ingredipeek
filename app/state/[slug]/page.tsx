@@ -7,6 +7,9 @@ import { AuthorBox } from '@/components/AuthorBox';
 import { CrossSiteLinks } from '@/components/CrossSiteLinks';
 import { AdSlot } from '@/components/AdSlot';
 import { StateRich } from '@/components/state/StateRich';
+import { ENTITY_VINTAGE } from '@/lib/authorship';
+import { StateHeroImage } from '@/components/StateHeroImage';
+import { getStateImageByName } from '@/lib/state-images';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -96,6 +99,8 @@ export default async function StatePage({ params }: Props) {
         <span className="mx-2">&rsaquo;</span>
         <span className="text-slate-700">{state.name}</span>
       </nav>
+
+      {(() => { const stateImage = getStateImageByName(state.name); return stateImage ? <StateHeroImage img={stateImage} /> : null; })()}
 
       <h1 className="text-3xl font-bold text-slate-900 mb-2">
         Food Products &amp; Ingredients in {state.name}
@@ -228,7 +233,7 @@ export default async function StatePage({ params }: Props) {
 
       <StateRich slug={slug} state={state} />
 
-      <AuthorBox />
+      <AuthorBox vintage={ENTITY_VINTAGE} source="USDA + FDA + state agriculture data" />
       <CrossSiteLinks current="IngrediPeek" />
     </div>
   );

@@ -6,6 +6,8 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { AdSlot } from "@/components/AdSlot";
 import { FreshnessTag } from "@/components/FreshnessTag";
 import { ComparisonBar } from "@/components/ComparisonBar";
+import { AuthorBox } from "@/components/AuthorBox";
+import { ENTITY_VINTAGE } from "@/lib/authorship";
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -232,6 +234,8 @@ export default async function ComparePage({ params }: Props) {
           </div>
         </section>
       )}
+
+      <AuthorBox vintage={ENTITY_VINTAGE} source="OpenFoodFacts comparison pair · FDA additive status · USDA FoodData Central · FDA 21 CFR 101.9(c) Daily Value" />
     </article>
   );
 }

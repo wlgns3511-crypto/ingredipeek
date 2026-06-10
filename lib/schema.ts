@@ -1,5 +1,15 @@
 import type { Product } from "./db";
-import { DB_UPDATED, PUBLISHER, EDITORIAL_TEAM } from './authorship';
+import {
+  DB_UPDATED,
+  ENTITY_VINTAGE,
+  ALLERGEN_VINTAGE,
+  PUBLISHER,
+  EDITORIAL_TEAM,
+  SOURCE_AUTHORITIES,
+} from './authorship';
+
+const sourceOrgs = SOURCE_AUTHORITIES.map(s => ({ '@type': 'Organization', name: s.name, url: s.url }));
+const sourceUrls = SOURCE_AUTHORITIES.map(s => s.url);
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -21,10 +31,12 @@ export function productJsonLd(product: Product) {
     description: `Check allergens, ingredients and dietary information for ${product.name}${product.brand ? ` by ${product.brand}` : ""}. Contains ${containsAllergens.length} of 8 major allergens.`,
     url: `${SITE_URL}/product/${product.slug}/`,
     ...(product.image_url ? { image: product.image_url } : {}),
-    datePublished: DB_UPDATED,
-    dateModified: DB_UPDATED,
-    author: { "@type": "Organization", name: "IngrediPeek", url: SITE_URL },
-    publisher: { "@type": "Organization", name: "IngrediPeek", url: SITE_URL },
+    datePublished: ENTITY_VINTAGE,
+    dateModified: ENTITY_VINTAGE,
+    author: { "@type": "Organization", name: EDITORIAL_TEAM.name, url: EDITORIAL_TEAM.url },
+    publisher: { "@type": "Organization", name: PUBLISHER.name, url: PUBLISHER.url },
+    reviewedBy: sourceOrgs,
+    isBasedOn: sourceUrls,
     mainEntityOfPage: `${SITE_URL}/product/${product.slug}/`,
   };
 }
@@ -71,6 +83,11 @@ export function allergenPageJsonLd(
     description,
     url: `${SITE_URL}/allergen/${type}/`,
     numberOfItems: count,
+    dateModified: ALLERGEN_VINTAGE,
+    author: { "@type": "Organization", name: EDITORIAL_TEAM.name, url: EDITORIAL_TEAM.url },
+    publisher: { "@type": "Organization", name: PUBLISHER.name, url: PUBLISHER.url },
+    reviewedBy: sourceOrgs,
+    isBasedOn: sourceUrls,
   };
 }
 
@@ -85,8 +102,10 @@ export function articleSchema(post: { title: string; description: string; slug: 
     url,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt ?? post.publishedAt,
-    author: { '@type': 'Organization', name: 'IngrediPeek', url: SITE_URL },
-    publisher: { '@type': 'Organization', name: 'IngrediPeek', url: SITE_URL },
+    author: { '@type': 'Organization', name: EDITORIAL_TEAM.name, url: EDITORIAL_TEAM.url },
+    publisher: { '@type': 'Organization', name: PUBLISHER.name, url: PUBLISHER.url },
+    reviewedBy: sourceOrgs,
+    isBasedOn: sourceUrls,
     mainEntityOfPage: url,
     ...(post.category && { articleSection: post.category }),
   };

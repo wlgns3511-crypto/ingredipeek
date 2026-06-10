@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { LEGAL_REVIEWED } from "@/lib/authorship";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - IngrediPeek",
@@ -15,7 +16,9 @@ export default function PrivacyPage() {
 
       <div className="max-w-3xl">
         <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-        <p className="text-slate-500 text-sm mb-8">Last updated: March 2026</p>
+        <p className="text-slate-500 text-sm mb-8">
+          Last reviewed: <time dateTime={LEGAL_REVIEWED}>{LEGAL_REVIEWED}</time>
+        </p>
 
         <div className="prose prose-slate max-w-none space-y-6 text-slate-700">
           <section>

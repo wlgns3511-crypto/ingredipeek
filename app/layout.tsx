@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { UpgradeAnalytics } from "@/components/upgrades/UpgradeAnalytics";
+import RelatedSites from "@/components/RelatedSites";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -11,7 +12,6 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
 const ROOT_ALTERNATE_LANGUAGES = {
   en: `${SITE_URL}/`,
-  es: `${SITE_URL}/es/`,
   'x-default': `${SITE_URL}/`,
 } as const;
 
@@ -122,13 +122,8 @@ export default function RootLayout({
                 Checker
               </a>
               <a href="/state/" className="text-slate-600 hover:text-green-700 transition-colors">By State</a>
-              <a href="/guide/" className="text-slate-600 hover:text-green-700 transition-colors">Guides</a>
-              <a href="/blog/" className="text-slate-600 hover:text-green-700 transition-colors">Articles</a>
               <a href="/about/" className="text-slate-600 hover:text-green-700 transition-colors">
                 About
-              </a>
-              <a href="/es/" className="text-slate-600 hover:text-green-700 transition-colors font-semibold">
-                ES
               </a>
             </nav>
           </div>
@@ -145,6 +140,12 @@ export default function RootLayout({
             <p className="mt-3">
               <a href="/about/" className="hover:text-green-700">About</a>
               {" | "}
+              <a href="/methodology/" className="hover:text-green-700">Methodology</a>
+              {" | "}
+              <a href="/editorial-policy/" className="hover:text-green-700">Editorial Policy</a>
+              {" | "}
+              <a href="/corrections-policy/" className="hover:text-green-700">Corrections</a>
+              {" | "}
               <a href="/privacy/" className="hover:text-green-700">Privacy</a>
               {" | "}
               <a href="/terms/" className="hover:text-green-700">Terms</a>
@@ -153,16 +154,7 @@ export default function RootLayout({
               {" | "}
               <a href="/contact/" className="hover:text-green-700">Contact</a>
             </p>
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-                Additional Resources
-              </p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                <a href="https://caloriewize.com" className="hover:text-green-700" rel="nofollow noopener">Nutrition</a>
-                <a href="https://calcpeek.com" className="hover:text-green-700" rel="nofollow noopener">Calculators</a>
-                <a href="https://nameblooms.com" className="hover:text-green-700" rel="nofollow noopener">Baby Names</a>
-              </div>
-            </div>
+            <RelatedSites currentSite="IngrediPeek" accentClass="hover:text-green-700" label="Additional Resources" />
             <p className="mt-3 text-xs italic text-slate-400">Helping people with food allergies eat safer, every day.</p>
             <p className="mt-1 text-xs">
               &copy; {new Date().getFullYear()} {SITE_NAME}. Always verify allergen information with product packaging.

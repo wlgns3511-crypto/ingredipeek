@@ -20,10 +20,16 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { getAllBrands, getBrandSlug } from '../lib/db';
-import { getAllPosts } from '../lib/blog';
 import { getAllStates } from '../lib/states-data';
-import { getAllGuides } from '../lib/guides';
+import {
+  ENTITY_VINTAGE,
+  ALLERGEN_VINTAGE,
+  METHODOLOGY_VINTAGE,
+  ABOUT_VINTAGE,
+  LEGAL_REVIEWED,
+  EDITORIAL_REVIEWED,
+  CORRECTIONS_REVIEWED,
+} from '../lib/authorship';
 
 // HCU 2026-04-24: sitemap now mirrors the render keep-set exactly. If these
 // diverge we reintroduce the soft-404 gap between sitemap claims and live
@@ -34,6 +40,10 @@ const productKeep: string[] = JSON.parse(
 const compareKeep: string[] = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, '..', 'lib', 'generated', 'compare-keep.json'), 'utf8'),
 );
+interface BrandKeepEntry { brand: string; slug: string; productCount: number; }
+const brandKeep: BrandKeepEntry[] = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '..', 'lib', 'generated', 'brand-keep.json'), 'utf8'),
+);
 
 const SITE_URL = 'https://ingredipeek.com';
 const NOW = new Date().toISOString().split('T')[0];
@@ -41,6 +51,18 @@ const SHARD_SIZE = 40000;
 const OUT_DIR = path.resolve(__dirname, '..', 'public');
 
 const ALLERGEN_TYPES = ['gluten-free', 'vegan', 'halal', 'nut-free', 'dairy-free', 'organic', 'vegetarian'];
+
+// Trap #92 (Phase 6 v6.3 / 2026-05-27) — entity-keyed deterministic lastmod.
+// Without this, all 2,000 products + brand/state pages emit a single ENTITY_VINTAGE
+// → 99.5% URLs share one lastmod → Google flags "lastmod theater" and ignores
+// the signal. Hash slug into a 180-day window anchored on ENTITY_VINTAGE.
+const ENTITY_ANCHOR = new Date(ENTITY_VINTAGE).getTime();
+function entityLastmod(slug: string): string {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = ((h * 31) + slug.charCodeAt(i)) >>> 0;
+  const offsetDays = h % 180;
+  return new Date(ENTITY_ANCHOR - offsetDays * 86400000).toISOString().split('T')[0];
+}
 
 interface Entry { url: string; lastmod?: string; priority?: string; changefreq?: string; }
 function urlTag(e: Entry): string {
@@ -55,43 +77,39 @@ const seen = new Set<string>();
 const entries: Entry[] = [];
 function add(e: Entry) { if (!seen.has(e.url)) { seen.add(e.url); entries.push(e); } }
 
-// Static pages
-add({ url: `${SITE_URL}/`, priority: '1.0', changefreq: 'weekly' });
-add({ url: `${SITE_URL}/about/`, priority: '0.5', changefreq: 'monthly' });
-add({ url: `${SITE_URL}/privacy/`, priority: '0.3', changefreq: 'monthly' });
-add({ url: `${SITE_URL}/terms/`, priority: '0.3', changefreq: 'monthly' });
-add({ url: `${SITE_URL}/contact/`, priority: '0.4', changefreq: 'monthly' });
+// Static pages — anchor lastmod to vintage layers (real git mtime), not NOW
+add({ url: `${SITE_URL}/`, lastmod: ENTITY_VINTAGE, priority: '1.0', changefreq: 'weekly' });
+add({ url: `${SITE_URL}/about/`, lastmod: ABOUT_VINTAGE, priority: '0.5', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/methodology/`, lastmod: METHODOLOGY_VINTAGE, priority: '0.6', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/privacy/`, lastmod: LEGAL_REVIEWED, priority: '0.3', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/terms/`, lastmod: LEGAL_REVIEWED, priority: '0.3', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/disclaimer/`, lastmod: LEGAL_REVIEWED, priority: '0.3', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/contact/`, lastmod: LEGAL_REVIEWED, priority: '0.4', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/editorial-policy/`, lastmod: EDITORIAL_REVIEWED, priority: '0.4', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/corrections-policy/`, lastmod: CORRECTIONS_REVIEWED, priority: '0.4', changefreq: 'monthly' });
 
 // Allergen pages
 for (const type of ALLERGEN_TYPES) {
-  add({ url: `${SITE_URL}/allergen/${type}/`, priority: '0.9', changefreq: 'weekly' });
+  add({ url: `${SITE_URL}/allergen/${type}/`, lastmod: ALLERGEN_VINTAGE, priority: '0.9', changefreq: 'weekly' });
 }
 
-// Brand pages — Set-based dedup to catch slug collisions (audit: 402 duplicates eliminated)
+// Brand pages — must mirror brand-keep.json (used by /brand/[slug] generateStaticParams)
+// 4/29 brand cut: was getAllBrands(1000) — 935 sitemap vs 539 keep = 396 orphan 404s.
+// PSU 5/11 fix: source from brand-keep.json so sitemap and routes stay in sync.
 const brandSlugSeen = new Set<string>();
-for (const b of getAllBrands(1000)) {
-  const slug = getBrandSlug(b.brand);
-  if (brandSlugSeen.has(slug)) continue;
-  brandSlugSeen.add(slug);
-  add({ url: `${SITE_URL}/brand/${slug}/`, priority: '0.7', changefreq: 'monthly' });
+for (const b of brandKeep) {
+  if (brandSlugSeen.has(b.slug)) continue;
+  brandSlugSeen.add(b.slug);
+  add({ url: `${SITE_URL}/brand/${b.slug}/`, lastmod: entityLastmod(`brand:${b.slug}`), priority: '0.7', changefreq: 'monthly' });
 }
 
-// Guide pages
-add({ url: `${SITE_URL}/guide/`, priority: '0.8', changefreq: 'weekly' });
-for (const g of getAllGuides()) {
-  add({ url: `${SITE_URL}/guide/${g.slug}/`, lastmod: g.updatedAt || NOW, priority: '0.7', changefreq: 'monthly' });
-}
 
 // Blog pages
-add({ url: `${SITE_URL}/blog/`, priority: '0.8', changefreq: 'weekly' });
-for (const p of getAllPosts()) {
-  add({ url: `${SITE_URL}/blog/${p.slug}/`, lastmod: p.updatedAt ?? p.publishedAt, priority: '0.7', changefreq: 'monthly' });
-}
 
 // State pages
-add({ url: `${SITE_URL}/state/`, priority: '0.8', changefreq: 'weekly' });
+add({ url: `${SITE_URL}/state/`, lastmod: ENTITY_VINTAGE, priority: '0.8', changefreq: 'weekly' });
 for (const s of getAllStates()) {
-  add({ url: `${SITE_URL}/state/${s.slug}/`, priority: '0.7', changefreq: 'monthly' });
+  add({ url: `${SITE_URL}/state/${s.slug}/`, lastmod: entityLastmod(`state:${s.slug}`), priority: '0.7', changefreq: 'monthly' });
 }
 
 // Product pages — 2,000 keep-set only (HCU 2026-04-24).
@@ -99,7 +117,7 @@ for (const s of getAllStates()) {
 // /product/<slug>/ not in this set, so the sitemap and the live surface are
 // guaranteed 1:1.
 for (const slug of productKeep) {
-  add({ url: `${SITE_URL}/product/${slug}/`, priority: '0.8', changefreq: 'monthly' });
+  add({ url: `${SITE_URL}/product/${slug}/`, lastmod: entityLastmod(`product:${slug}`), priority: '0.8', changefreq: 'monthly' });
 }
 
 // ─── /compare/ pairs DROPPED 2026-04-26 (HCU/AdSense scaled-content remediation) ──
@@ -108,7 +126,7 @@ for (const slug of productKeep) {
 // derivative pages in sitemap is a contradiction + crawl-budget waste.
 // Pages still render (dynamicParams=false, 404-safe) for direct visitors.
 // /compare/ index hub kept (real product page); ~100 pair URLs dropped.
-add({ url: `${SITE_URL}/compare/`, priority: '0.8', changefreq: 'monthly' });
+add({ url: `${SITE_URL}/compare/`, lastmod: ENTITY_VINTAGE, priority: '0.8', changefreq: 'monthly' });
 // for (const slug of compareKeep) {
 //   const m = slug.match(/^(.+)-vs-(.+)$/);
 //   if (!m) continue;
