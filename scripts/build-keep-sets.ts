@@ -53,8 +53,16 @@ function loadBingSlugs(routeRe: RegExp): string[] {
     .sort();
   if (!files.length) return [];
   try {
-    const json = JSON.parse(fs.readFileSync(path.join(BING_JSON_DIR, files[files.length - 1]), 'utf8'));
-    const site = json[BING_DOMAIN];
+    // 2026-06-11 partial-run shadow fix (kalimawize 2026-05-15 pattern): the
+    // absolute-latest snapshot may be a partial run without this domain —
+    // scan newest-first and use the first file that actually contains us.
+    // Source-side carry-forward also added to analyze_bing_pages.py same day;
+    // this is defense-in-depth for historical partial files.
+    let site: any;
+    for (let i = files.length - 1; i >= 0; i--) {
+      const json = JSON.parse(fs.readFileSync(path.join(BING_JSON_DIR, files[i]), 'utf8'));
+      if (json[BING_DOMAIN] && Array.isArray(json[BING_DOMAIN].pages)) { site = json[BING_DOMAIN]; break; }
+    }
     if (!site || !Array.isArray(site.pages)) return [];
     const out = new Map<string, number>();
     for (const pg of site.pages) {
