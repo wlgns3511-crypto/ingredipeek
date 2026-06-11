@@ -2,7 +2,7 @@
  * Above-the-fold state photo with Wikimedia Commons attribution.
  *
  * Static <picture> (AVIF + JPEG fallback), no Next.js /_next/image runtime.
- * LCP candidate: fetchpriority="high", explicit width/height, no CLS.
+ * LCP candidate: fetchPriority="high", explicit width/height, no CLS.
  *
  * Forked from salarybycity/components/StateHeroImage.tsx — manifest + asset
  * pool are shared across all state-anchored sites.
@@ -24,9 +24,7 @@ export function StateHeroImage({ img }: Props) {
           width={img.finalWidth}
           height={img.finalHeight}
           decoding="async"
-          /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-          // @ts-expect-error react types still flag this; verified working in next 16
-          fetchpriority="high"
+          fetchPriority="high"
           className="max-h-[500px] max-w-full w-auto h-auto mx-auto block"
         />
       </picture>
