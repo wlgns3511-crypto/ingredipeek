@@ -11,6 +11,13 @@ import { classifyProcessingScore } from "@/lib/processing-score";
 import { decodeAllergenSafetyMatrix } from "@/lib/allergen-safety-matrix";
 import { classifyNutrientDensity } from "@/lib/nutrient-density-band";
 import { ENTITY_VINTAGE } from "@/lib/authorship";
+import { TrustBlock } from "@/components/upgrades/TrustBlock";
+import { InsightBlock, type Insight } from "@/components/upgrades/InsightBlock";
+import { TableOfContents } from "@/components/upgrades/TableOfContents";
+import { RelatedEntities } from "@/components/upgrades/RelatedEntities";
+import { AllergenChecker as AllergenFitCheck } from "@/components/AllergenChecker";
+import { FAQ } from "@/components/FAQ";
+import { faqJsonLd } from "@/lib/schema";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 
@@ -83,8 +90,102 @@ export default async function BrandPage({ params }: Props) {
   const richOrDense = densityCounts.NutrientRich + densityCounts.NutrientDense;
   const sparseOrLimiting = densityCounts.NutrientSparse + densityCounts.LimitingDense;
 
+  // 1. TrustBlock props
+  const trustSources = [
+    { name: "OpenFoodFacts", url: "https://world.openfoodfacts.org/" },
+    { name: "FDA Food Additive Status", url: "https://www.fda.gov/food/food-additives-petitions/food-additive-status-list" },
+    { name: "USDA FoodData Central", url: "https://fdc.nal.usda.gov/" },
+  ];
+
+  // 2. InsightBlock data
+  const insights: Insight[] = [];
+  
+  // Dietary availability insight
+  const gfPct = products.length > 0 ? (glutenFreeCount / products.length) * 100 : 0;
+  if (gfPct >= 70) {
+    insights.push({
+      text: `${brand} offers excellent gluten-free accessibility, with ${formatPercent(gfPct, 0)} of their product catalog formulated without gluten ingredients.`,
+      sentiment: "positive",
+    });
+  } else if (gfPct <= 20 && products.length > 0) {
+    insights.push({
+      text: `Limited gluten-free choices: Only ${formatPercent(gfPct, 0)} of ${brand} products are classified as gluten-free. Check labels carefully.`,
+      sentiment: "negative",
+    });
+  } else if (products.length > 0) {
+    insights.push({
+      text: `Moderate dietary options: ${formatPercent(gfPct, 0)} of the ${brand} catalog is gluten-free, while ${formatPercent((veganCount / products.length) * 100, 0)} is vegan.`,
+      sentiment: "neutral",
+    });
+  }
+
+  // Processing score insight
+  if (dominantTier === 'Whole' || dominantTier === 'Minimal') {
+    insights.push({
+      text: `${brand} catalog highlights minimally processed foods, prioritizing whole ingredients with low additive footprints.`,
+      sentiment: "positive",
+    });
+  } else if (dominantTier === 'UltraProcessed') {
+    insights.push({
+      text: `Ultra-processed dominance: The primary processing classification for ${brand} products is UltraProcessed. Eat in moderation.`,
+      sentiment: "negative",
+    });
+  } else {
+    insights.push({
+      text: `Typical processed baseline: Most ${brand} products belong to the Processed tier, which includes standard preservation or flavor additives.`,
+      sentiment: "neutral",
+    });
+  }
+
+  // Nutrient density insight
+  if (richOrDense > 0 && products.length > 0) {
+    const densePct = (richOrDense / products.length) * 100;
+    if (densePct >= 50) {
+      insights.push({
+        text: `Strong nutrient density: Over ${formatPercent(densePct, 0)} of this catalog ranks on the beneficial side of the FDA Daily Value guidelines.`,
+        sentiment: "positive",
+      });
+    } else {
+      insights.push({
+        text: `${formatPercent(densePct, 0)} of ${brand} products meet FDA criteria for high nutrient density, with the remainder classified as standard or sparse.`,
+        sentiment: "neutral",
+      });
+    }
+  }
+
+  // 3. FAQ Items
+  const faqs = [
+    {
+      question: `Are there gluten-free options available from ${brand}?`,
+      answer: `Yes, we track ${products.length} products from ${brand}, and ${glutenFreeCount} of them (${formatPercent(gfPct, 0)}) are classified as gluten-free. Always double-check package labels for the certified gluten-free seal before consuming if you have celiac disease.`,
+    },
+    {
+      question: `How processed are ${brand} food products?`,
+      answer: `The dominant processing tier for ${brand} is ${dominantTier}. Out of ${products.length} products analyzed, ${tierCounts.Whole} are classified as Whole, ${tierCounts.Minimal} as Minimal, ${tierCounts.Processed} as Processed, and ${tierCounts.UltraProcessed} as UltraProcessed under the NOVA classification system.`,
+    },
+    {
+      question: `What are the top allergens found in ${brand} products?`,
+      answer: `Based on catalog fingerprinting, the most common allergens flagged in ${brand}'s products include ${fingerprint.topAllergens.filter((a) => a.pct > 0).slice(0, 3).map((a) => `${a.name} (${formatPercent(a.pct)})`).join(', ') || 'none'}. In total, ${containsMultipleCount} products declared 3 or more FDA Top 9 allergens.`,
+    },
+  ];
+
+  // 4. Related entities (other brands)
+  const relatedBrands = BRAND_KEEP
+    .filter((b) => b.slug !== slug)
+    .slice(0, 6)
+    .map((b) => ({
+      name: b.brand,
+      href: `/brand/${b.slug}/`,
+      stat: `${b.productCount} products`,
+    }));
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+      />
+
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },
@@ -101,6 +202,12 @@ export default async function BrandPage({ params }: Props) {
           Browse all {brand} products and check allergens, ingredients, and dietary compatibility.
         </p>
       </section>
+
+      <TrustBlock
+        sources={trustSources}
+        updated={ENTITY_VINTAGE}
+        label="Verified Data"
+      />
 
       {/* Stats */}
       {products.length > 0 && (
@@ -123,6 +230,8 @@ export default async function BrandPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      <TableOfContents />
 
       {/* Catalog signal — first-party brand fingerprint */}
       {fingerprint.productCount >= 5 && (
@@ -175,6 +284,12 @@ export default async function BrandPage({ params }: Props) {
           </p>
         </section>
       )}
+
+      <InsightBlock
+        entityName={brand}
+        insights={insights}
+        heading="Key Takeaways"
+      />
 
       {/* PSU 5/11: ProcessingScore + AllergenSafetyMatrix interpretation */}
       {products.length >= 3 && (
@@ -231,6 +346,8 @@ export default async function BrandPage({ params }: Props) {
           </p>
         </section>
       )}
+
+      <AllergenFitCheck />
 
       <AdSlot id="3741591457" />
 
@@ -317,6 +434,8 @@ export default async function BrandPage({ params }: Props) {
         </section>
       )}
 
+      <FAQ items={faqs} />
+
       {/* High-CPC CTA */}
       <section className="mt-12 bg-gradient-to-r from-green-700 to-emerald-800 rounded-2xl p-6 text-white">
         <h2 className="text-xl font-bold mb-2">Looking for allergy-safe alternatives?</h2>
@@ -332,6 +451,12 @@ export default async function BrandPage({ params }: Props) {
       </section>
 
       <AdSlot id="9876543210" />
+
+      <RelatedEntities
+        entityName={brand}
+        items={relatedBrands}
+        heading="Explore Other Food Brands"
+      />
 
       <AuthorBox vintage={ENTITY_VINTAGE} source="OpenFoodFacts brand-aggregated catalog · FDA Food Additive Status · USDA FoodData Central · FDA 21 CFR 101.9(c) Daily Value" />
     </>

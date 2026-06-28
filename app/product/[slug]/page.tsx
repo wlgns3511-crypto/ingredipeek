@@ -48,6 +48,8 @@ import { TrustBlock } from "@/components/upgrades/TrustBlock";
 import { DecisionNext } from "@/components/upgrades/DecisionNext";
 import { RelatedEntities } from '@/components/upgrades/RelatedEntities';
 import { TableOfContents } from '@/components/upgrades/TableOfContents';
+import { calculateProprietaryMetrics } from '@/lib/proprietary-metrics';
+import { ProprietaryMetricsBlock } from '@/components/upgrades/ProprietaryMetricsBlock';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ingredipeek.com";
 // HCU 2026-04-24: was `getAllComparisonSlugs(5000)` — now sourced from the
@@ -116,7 +118,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     nutriPart,
     caloriePart,
   ].filter(Boolean).slice(0, 3).join(', ');
-  const description = `${product.name}${brandSuffix}: ${statParts}. ProcessingScore + 8-allergen panel + 50-additive watchlist composed from FDA / EFSA / USDA / Codex Alimentarius cross-walk.`;
+  let description = `${product.name}${brandSuffix}: ${statParts}. ProcessingScore + 8-allergen panel + 50-additive watchlist composed from FDA / EFSA / USDA / Codex Alimentarius cross-walk.`;
+
+  const additiveProfile = getAdditiveProfile(product.ingredients_text);
+  const metrics = calculateProprietaryMetrics(
+    product.name,
+    slug,
+    product.nova_group,
+    additiveProfile.matched.length,
+    product.nutriscore
+  );
+
+  description = `[Food Safety: Processing Score ${metrics.processingScore}/100, Grade ${metrics.overallGrade}] ` + description;
 
   return {
     // title.absolute bypasses layout title.template (' | IngrediPeek' 14c
@@ -255,8 +268,16 @@ export default async function ProductPage({ params }: Props) {
     ],
   };
 
+  const metrics = calculateProprietaryMetrics(
+    product.name,
+    slug,
+    product.nova_group,
+    additiveProfile.matched.length,
+    product.nutriscore
+  );
+
   return (
-    <>
+    <article data-toc-root>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
@@ -340,6 +361,8 @@ export default async function ProductPage({ params }: Props) {
         ]}
         updated="Open Food Facts community database"
       />
+
+      <ProprietaryMetricsBlock {...metrics} />
 
       <section
         className="mb-6 bg-slate-50 border border-slate-200 rounded-lg p-5"
@@ -1026,6 +1049,6 @@ export default async function ProductPage({ params }: Props) {
         </section>
       )}
       {/* 2026-04-28 — 'Discover More Comparisons' section 제거 (AdSense scaled-content remediation, /compare/ noindex) */}
-    </>
+    </article>
   );
 }
