@@ -1,0 +1,239 @@
+{
+  "date": "2026-07-23",
+  "kind": "comparison",
+  "title": "Mississippi vs Delaware: a quick IngrediPeek comparison",
+  "description": "4 readings from the IngrediPeek dataset for 2026-07-23: mississippi vs delaware; ranked by food manufacturing employees; record in focus: mississippi; where to go next. Every figure below is computed from the stored records, and each link opens the record it came from.",
+  "intro": "4 readings from the IngrediPeek dataset for 2026-07-23: mississippi vs delaware; ranked by food manufacturing employees; record in focus: mississippi; where to go next. Every figure below is computed from the stored records, and each link opens the record it came from.",
+  "items": [
+    {
+      "label": "Mississippi",
+      "value": "Food Manufacturing Employees: 24,200",
+      "href": "/state/mississippi/",
+      "metric": 24200,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #24 of 51 by food manufacturing employees · 6% above the median (22,800)."
+    },
+    {
+      "label": "Delaware",
+      "value": "Food Manufacturing Employees: 6,800",
+      "href": "/state/delaware/",
+      "metric": 6800,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #41 of 51 by food manufacturing employees · 70% below the median (22,800)."
+    },
+    {
+      "label": "Pennsylvania",
+      "value": "Food Manufacturing Employees: 62,400",
+      "href": "/state/pennsylvania/",
+      "metric": 62400,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #5 of 51 by food manufacturing employees · top 10% · 174% above the median (22,800)."
+    },
+    {
+      "label": "Georgia",
+      "value": "Food Manufacturing Employees: 56,800",
+      "href": "/state/georgia/",
+      "metric": 56800,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #6 of 51 by food manufacturing employees · 149% above the median (22,800)."
+    },
+    {
+      "label": "New York",
+      "value": "Food Manufacturing Employees: 56,200",
+      "href": "/state/new-york/",
+      "metric": 56200,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #7 of 51 by food manufacturing employees · 146% above the median (22,800)."
+    },
+    {
+      "label": "Ohio",
+      "value": "Food Manufacturing Employees: 52,600",
+      "href": "/state/ohio/",
+      "metric": 52600,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #8 of 51 by food manufacturing employees · 131% above the median (22,800)."
+    },
+    {
+      "label": "Florida",
+      "value": "Food Manufacturing Employees: 52,400",
+      "href": "/state/florida/",
+      "metric": 52400,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #9 of 51 by food manufacturing employees · 130% above the median (22,800)."
+    },
+    {
+      "label": "Mississippi",
+      "value": "Food Manufacturing Employees: 24,200",
+      "href": "/state/mississippi/",
+      "metric": 24200,
+      "metricLabel": "foodManufacturingEmployees",
+      "verdict": "Ranks #24 of 51 by food manufacturing employees · 6% above the median (22,800)."
+    },
+    {
+      "label": "Nevada",
+      "value": "Food Manufacturing Employees: 6,200",
+      "href": "/state/nevada/",
+      "metric": 6200,
+      "metricLabel": "foodManufacturingEmployees"
+    },
+    {
+      "label": "Nebraska",
+      "value": "Food Manufacturing Employees: 38,400",
+      "href": "/state/nebraska/",
+      "metric": 38400,
+      "metricLabel": "foodManufacturingEmployees"
+    },
+    {
+      "label": "Montana",
+      "value": "Food Manufacturing Employees: 4,200",
+      "href": "/state/montana/",
+      "metric": 4200,
+      "metricLabel": "foodManufacturingEmployees"
+    },
+    {
+      "label": "Missouri",
+      "value": "Food Manufacturing Employees: 36,400",
+      "href": "/state/missouri/",
+      "metric": 36400,
+      "metricLabel": "foodManufacturingEmployees"
+    }
+  ],
+  "links": [
+    {
+      "label": "View Mississippi",
+      "href": "/state/mississippi/"
+    },
+    {
+      "label": "View Delaware",
+      "href": "/state/delaware/"
+    }
+  ],
+  "sections": [
+    {
+      "kind": "comparison",
+      "heading": "Mississippi vs Delaware",
+      "body": "Mississippi (Food Manufacturing Employees: 24,200) against Delaware (Food Manufacturing Employees: 6,800). Mississippi is 17,400 food manufacturing employees higher, a 255.9% gap.",
+      "items": [
+        {
+          "label": "Mississippi",
+          "value": "Food Manufacturing Employees: 24,200",
+          "href": "/state/mississippi/",
+          "metric": 24200,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #24 of 51 by food manufacturing employees · 6% above the median (22,800)."
+        },
+        {
+          "label": "Delaware",
+          "value": "Food Manufacturing Employees: 6,800",
+          "href": "/state/delaware/",
+          "metric": 6800,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #41 of 51 by food manufacturing employees · 70% below the median (22,800)."
+        }
+      ],
+      "takeaway": "Both sit against a dataset median of 22,800 food manufacturing employees."
+    },
+    {
+      "kind": "ranking",
+      "heading": "Ranked by food manufacturing employees",
+      "body": "Positions 5–9 of 51 records carrying a food manufacturing employees figure. Ordering is computed from the stored values, not editorial preference.",
+      "items": [
+        {
+          "label": "Pennsylvania",
+          "value": "Food Manufacturing Employees: 62,400",
+          "href": "/state/pennsylvania/",
+          "metric": 62400,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #5 of 51 by food manufacturing employees · top 10% · 174% above the median (22,800)."
+        },
+        {
+          "label": "Georgia",
+          "value": "Food Manufacturing Employees: 56,800",
+          "href": "/state/georgia/",
+          "metric": 56800,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #6 of 51 by food manufacturing employees · 149% above the median (22,800)."
+        },
+        {
+          "label": "New York",
+          "value": "Food Manufacturing Employees: 56,200",
+          "href": "/state/new-york/",
+          "metric": 56200,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #7 of 51 by food manufacturing employees · 146% above the median (22,800)."
+        },
+        {
+          "label": "Ohio",
+          "value": "Food Manufacturing Employees: 52,600",
+          "href": "/state/ohio/",
+          "metric": 52600,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #8 of 51 by food manufacturing employees · 131% above the median (22,800)."
+        },
+        {
+          "label": "Florida",
+          "value": "Food Manufacturing Employees: 52,400",
+          "href": "/state/florida/",
+          "metric": 52400,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #9 of 51 by food manufacturing employees · 130% above the median (22,800)."
+        }
+      ],
+      "takeaway": "Dataset median: 22,800. Highest on file: 196,500 (California)."
+    },
+    {
+      "kind": "spotlight",
+      "heading": "Record in focus: Mississippi",
+      "body": "Mississippi records food manufacturing employees of 24,200 in the current IngrediPeek data. The linked record holds the full field list and the source note behind the figure.",
+      "items": [
+        {
+          "label": "Mississippi",
+          "value": "Food Manufacturing Employees: 24,200",
+          "href": "/state/mississippi/",
+          "metric": 24200,
+          "metricLabel": "foodManufacturingEmployees",
+          "verdict": "Ranks #24 of 51 by food manufacturing employees · 6% above the median (22,800)."
+        }
+      ],
+      "takeaway": "Ranks #24 of 51 by food manufacturing employees · 6% above the median (22,800)."
+    },
+    {
+      "kind": "route",
+      "heading": "Where to go next",
+      "body": "A short path through IngrediPeek for anyone starting today. These are entry points into the detailed pages, not a substitute for them.",
+      "items": [
+        {
+          "label": "Nevada",
+          "value": "Food Manufacturing Employees: 6,200",
+          "href": "/state/nevada/",
+          "metric": 6200,
+          "metricLabel": "foodManufacturingEmployees"
+        },
+        {
+          "label": "Nebraska",
+          "value": "Food Manufacturing Employees: 38,400",
+          "href": "/state/nebraska/",
+          "metric": 38400,
+          "metricLabel": "foodManufacturingEmployees"
+        },
+        {
+          "label": "Montana",
+          "value": "Food Manufacturing Employees: 4,200",
+          "href": "/state/montana/",
+          "metric": 4200,
+          "metricLabel": "foodManufacturingEmployees"
+        },
+        {
+          "label": "Missouri",
+          "value": "Food Manufacturing Employees: 36,400",
+          "href": "/state/missouri/",
+          "metric": 36400,
+          "metricLabel": "foodManufacturingEmployees"
+        }
+      ]
+    }
+  ],
+  "source": "USDA FoodData Central and documented ingredient references",
+  "dataDate": "2026-05-19",
+  "fingerprint": "f4d395ff"
+}
